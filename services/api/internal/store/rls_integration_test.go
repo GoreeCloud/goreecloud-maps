@@ -2,6 +2,7 @@ package store
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/url"
 	"os"
@@ -77,10 +78,13 @@ func TestMultiUserRLSIsolation(t *testing.T) {
 
 	collection, err := dataStore.CreateCollection(ctx, owner.ID, CreateCollectionInput{
 		Name:        "Chicago trip",
-		Description: "Two-user RLS integration fixture",
+		Description: "Multi-user RLS integration fixture",
 	})
 	if err != nil {
 		t.Fatalf("owner create collection: %v", err)
+	}
+	if collection.Revision != 1 || collection.Role != "owner" {
+		t.Fatalf("unexpected new collection: %#v", collection)
 	}
 
 	mustCollectionCount(t, ctx, dataStore, owner.ID, 1)
@@ -88,94 +92,123 @@ func TestMultiUserRLSIsolation(t *testing.T) {
 	mustCollectionCount(t, ctx, dataStore, viewer.ID, 0)
 	mustCollectionCount(t, ctx, dataStore, stranger.ID, 0)
 
-	if err := dataStore.withUserTx(ctx, owner.ID, func(tx pgx.Tx) error {
-		_, err := tx.Exec(ctx, `
-			INSERT INTO maps.collection_members (collection_id, user_id, role, invited_by_user_id)
-			VALUES ($1, $2, 'editor', $4), ($1, $3, 'viewer', $4)
-		`, collection.ID, editor.ID, viewer.ID, owner.ID)
-		return err
-	}); err != nil {
-		t.Fatalf("owner add members: %v", err)
+	if _, err := dataStore.AddCollectionMember(ctx, owner.ID, collection.ID, editor.ID, "editor"); err != nil {
+		t.Fatalf("owner add editor: %v", err)
+	}
+	if _, err := dataStore.AddCollectionMember(ctx, owner.ID, collection.ID, viewer.ID, "viewer"); err != nil {
+		t.Fatalf("owner add viewer: %v", err)
+	}
+	if _, err := dataStore.AddCollectionMember(ctx, editor.ID, collection.ID, stranger.ID, "viewer"); !errors.Is(err, ErrForbidden) {
+		t.Fatalf("editor membership administration must be forbidden, got %v", err)
+	}
+
+	members, err := dataStore.ListCollectionMembers(ctx, viewer.ID, collection.ID)
+	if err != nil {
+		t.Fatalf("viewer list members: %v", err)
+	}
+	if len(members) != 3 {
+		t.Fatalf("expected owner/editor/viewer membership view, got %#v", members)
 	}
 
 	mustCollectionCount(t, ctx, dataStore, editor.ID, 1)
 	mustCollectionCount(t, ctx, dataStore, viewer.ID, 1)
 	mustCollectionCount(t, ctx, dataStore, stranger.ID, 0)
 
-	if err := dataStore.withUserTx(ctx, editor.ID, func(tx pgx.Tx) error {
-		_, err := tx.Exec(ctx, `
-			INSERT INTO maps.collection_items (
-				collection_id, created_by_user_id, provider, provider_place_id,
-				name, address, position, note, sort_key
-			)
-			VALUES (
-				$1, $2, 'test', 'union-station', 'Union Station', 'Chicago',
-				ST_SetSRID(ST_MakePoint(-87.6400, 41.8810), 4326)::geography,
-				'Editor-created fixture', 10
-			)
-		`, collection.ID, editor.ID)
-		return err
-	}); err != nil {
-		t.Fatalf("editor add collection item: %v", err)
-	}
-
-	mustVisibleItemCount(t, ctx, dataStore, owner.ID, collection.ID, 1)
-	mustVisibleItemCount(t, ctx, dataStore, editor.ID, collection.ID, 1)
-	mustVisibleItemCount(t, ctx, dataStore, viewer.ID, collection.ID, 1)
-	mustVisibleItemCount(t, ctx, dataStore, stranger.ID, collection.ID, 0)
-
-	if err := dataStore.withUserTx(ctx, editor.ID, func(tx pgx.Tx) error {
-		command, err := tx.Exec(ctx, `UPDATE maps.collections SET name = 'Edited Chicago trip' WHERE id = $1`, collection.ID)
-		if err != nil {
-			return err
-		}
-		if command.RowsAffected() != 1 {
-			return fmt.Errorf("expected editor update to affect 1 row, affected %d", command.RowsAffected())
-		}
-		return nil
-	}); err != nil {
+	editedCollection, err := dataStore.UpdateCollection(ctx, editor.ID, collection.ID, UpdateCollectionInput{
+		Name:             stringPointer("Edited Chicago trip"),
+		ExpectedRevision: collection.Revision,
+	})
+	if err != nil {
 		t.Fatalf("editor update collection: %v", err)
 	}
-
-	var viewerUpdateRows int64
-	if err := dataStore.withUserTx(ctx, viewer.ID, func(tx pgx.Tx) error {
-		command, err := tx.Exec(ctx, `UPDATE maps.collections SET name = 'Viewer edit must fail' WHERE id = $1`, collection.ID)
-		if err != nil {
-			return err
-		}
-		viewerUpdateRows = command.RowsAffected()
-		return nil
-	}); err != nil {
-		t.Fatalf("viewer update authorization check: %v", err)
+	if editedCollection.Revision != 2 || editedCollection.Name != "Edited Chicago trip" {
+		t.Fatalf("unexpected edited collection: %#v", editedCollection)
 	}
-	if viewerUpdateRows != 0 {
-		t.Fatalf("viewer must not update collection; affected %d rows", viewerUpdateRows)
+	if _, err := dataStore.UpdateCollection(ctx, viewer.ID, collection.ID, UpdateCollectionInput{
+		Name:             stringPointer("Viewer edit must fail"),
+		ExpectedRevision: editedCollection.Revision,
+	}); !errors.Is(err, ErrForbidden) {
+		t.Fatalf("viewer collection update must be forbidden, got %v", err)
 	}
-	mustCollectionName(t, ctx, dataStore, owner.ID, collection.ID, "Edited Chicago trip")
-
-	if err := dataStore.withUserTx(ctx, viewer.ID, func(tx pgx.Tx) error {
-		_, err := tx.Exec(ctx, `
-			INSERT INTO maps.collection_items (
-				collection_id, created_by_user_id, provider, name, position
-			)
-			VALUES (
-				$1, $2, 'test', 'Viewer write must fail',
-				ST_SetSRID(ST_MakePoint(-87.63, 41.89), 4326)::geography
-			)
-		`, collection.ID, viewer.ID)
-		return err
-	}); err == nil {
-		t.Fatal("viewer must not insert collection items")
+	if _, err := dataStore.UpdateCollection(ctx, owner.ID, collection.ID, UpdateCollectionInput{
+		Description:      stringPointer("stale write"),
+		ExpectedRevision: 1,
+	}); !errors.Is(err, ErrConflict) {
+		t.Fatalf("stale collection update must conflict, got %v", err)
 	}
 
-	if err := dataStore.withUserTx(ctx, editor.ID, func(tx pgx.Tx) error {
-		_, err := tx.Exec(ctx, `
-			INSERT INTO maps.collection_members (collection_id, user_id, role, invited_by_user_id)
-			VALUES ($1, $2, 'viewer', $3)
-		`, collection.ID, stranger.ID, editor.ID)
-		return err
-	}); err == nil {
-		t.Fatal("editor must not manage collection membership")
+	item, err := dataStore.CreateCollectionItem(ctx, editor.ID, collection.ID, CreateCollectionItemInput{
+		Provider:        "test",
+		ProviderPlaceID: "union-station",
+		Name:            "Union Station",
+		Address:         "Chicago",
+		Latitude:        41.881,
+		Longitude:       -87.64,
+		Note:            "Editor-created fixture",
+		SortKey:         10,
+	})
+	if err != nil {
+		t.Fatalf("editor create collection item: %v", err)
+	}
+	if item.Revision != 1 || item.CreatedByUserID != editor.ID {
+		t.Fatalf("unexpected item: %#v", item)
+	}
+	if _, err := dataStore.CreateCollectionItem(ctx, viewer.ID, collection.ID, CreateCollectionItemInput{
+		Provider:  "test",
+		Name:      "Viewer write must fail",
+		Latitude:  41.89,
+		Longitude: -87.63,
+	}); !errors.Is(err, ErrForbidden) {
+		t.Fatalf("viewer item creation must be forbidden, got %v", err)
+	}
+
+	ownerItems, err := dataStore.ListCollectionItems(ctx, owner.ID, collection.ID)
+	if err != nil || len(ownerItems) != 1 {
+		t.Fatalf("owner list collection items: items=%#v err=%v", ownerItems, err)
+	}
+	viewerItems, err := dataStore.ListCollectionItems(ctx, viewer.ID, collection.ID)
+	if err != nil || len(viewerItems) != 1 {
+		t.Fatalf("viewer list collection items: items=%#v err=%v", viewerItems, err)
+	}
+	if _, err := dataStore.ListCollectionItems(ctx, stranger.ID, collection.ID); !errors.Is(err, ErrNotFound) {
+		t.Fatalf("stranger must not enumerate collection items, got %v", err)
+	}
+
+	updatedItem, err := dataStore.UpdateCollectionItem(ctx, editor.ID, collection.ID, item.ID, UpdateCollectionItemInput{
+		Note:             stringPointer("Updated note"),
+		SortKey:          int64Pointer(20),
+		ExpectedRevision: item.Revision,
+	})
+	if err != nil {
+		t.Fatalf("editor update collection item: %v", err)
+	}
+	if updatedItem.Revision != 2 || updatedItem.Note != "Updated note" || updatedItem.SortKey != 20 {
+		t.Fatalf("unexpected updated item: %#v", updatedItem)
+	}
+	if _, err := dataStore.UpdateCollectionItem(ctx, editor.ID, collection.ID, item.ID, UpdateCollectionItemInput{
+		Note:             stringPointer("stale item update"),
+		ExpectedRevision: 1,
+	}); !errors.Is(err, ErrConflict) {
+		t.Fatalf("stale item update must conflict, got %v", err)
+	}
+	if _, err := dataStore.UpdateCollectionItem(ctx, viewer.ID, collection.ID, item.ID, UpdateCollectionItemInput{
+		Note:             stringPointer("viewer edit"),
+		ExpectedRevision: updatedItem.Revision,
+	}); !errors.Is(err, ErrForbidden) {
+		t.Fatalf("viewer item update must be forbidden, got %v", err)
+	}
+
+	if _, err := dataStore.UpdateCollectionMemberRole(ctx, owner.ID, collection.ID, editor.ID, "viewer"); err != nil {
+		t.Fatalf("owner demote editor: %v", err)
+	}
+	if _, err := dataStore.UpdateCollectionItem(ctx, editor.ID, collection.ID, item.ID, UpdateCollectionItemInput{
+		Note:             stringPointer("demoted editor write"),
+		ExpectedRevision: updatedItem.Revision,
+	}); !errors.Is(err, ErrForbidden) {
+		t.Fatalf("demoted editor must not update item, got %v", err)
+	}
+	if _, err := dataStore.UpdateCollectionMemberRole(ctx, owner.ID, collection.ID, editor.ID, "editor"); err != nil {
+		t.Fatalf("owner restore editor: %v", err)
 	}
 
 	if err := dataStore.withUserTx(ctx, owner.ID, func(tx pgx.Tx) error {
@@ -192,29 +225,40 @@ func TestMultiUserRLSIsolation(t *testing.T) {
 	}); err != nil {
 		t.Fatalf("owner create saved place: %v", err)
 	}
-
 	mustSavedPlaceCount(t, ctx, dataStore, owner.ID, 1)
 	mustSavedPlaceCount(t, ctx, dataStore, stranger.ID, 0)
 
-	if err := dataStore.withUserTx(ctx, viewer.ID, func(tx pgx.Tx) error {
-		command, err := tx.Exec(ctx, `DELETE FROM maps.collection_members WHERE collection_id = $1 AND user_id = $2`, collection.ID, viewer.ID)
-		if err != nil {
-			return err
-		}
-		if command.RowsAffected() != 1 {
-			return fmt.Errorf("expected viewer self-removal to affect 1 row, affected %d", command.RowsAffected())
-		}
-		return nil
-	}); err != nil {
+	if err := dataStore.RemoveCollectionMember(ctx, viewer.ID, collection.ID, viewer.ID); err != nil {
 		t.Fatalf("viewer self-remove membership: %v", err)
 	}
 	mustCollectionCount(t, ctx, dataStore, viewer.ID, 0)
+	if _, err := dataStore.ListCollectionMembers(ctx, viewer.ID, collection.ID); !errors.Is(err, ErrNotFound) {
+		t.Fatalf("removed viewer must lose collection access, got %v", err)
+	}
+
+	if err := dataStore.DeleteCollectionItem(ctx, editor.ID, collection.ID, item.ID, updatedItem.Revision); err != nil {
+		t.Fatalf("editor delete collection item: %v", err)
+	}
+	itemsAfterDelete, err := dataStore.ListCollectionItems(ctx, owner.ID, collection.ID)
+	if err != nil || len(itemsAfterDelete) != 0 {
+		t.Fatalf("expected deleted item to disappear: items=%#v err=%v", itemsAfterDelete, err)
+	}
 
 	if err := dataStore.withUserTx(ctx, owner.ID, func(tx pgx.Tx) error {
 		_, err := tx.Exec(ctx, `UPDATE maps.collections SET owner_user_id = $2 WHERE id = $1`, collection.ID, editor.ID)
 		return err
 	}); err == nil {
 		t.Fatal("collection ownership mutation must be rejected")
+	}
+
+	var auditCount int
+	if err := dataStore.withUserTx(ctx, owner.ID, func(tx pgx.Tx) error {
+		return tx.QueryRow(ctx, `SELECT count(*) FROM maps.audit_events WHERE collection_id = $1`, collection.ID).Scan(&auditCount)
+	}); err != nil {
+		t.Fatalf("owner read audit events: %v", err)
+	}
+	if auditCount < 8 {
+		t.Fatalf("expected collaboration audit events, got %d", auditCount)
 	}
 }
 
@@ -271,32 +315,6 @@ func mustCollectionCount(t *testing.T, ctx context.Context, dataStore *Store, us
 	}
 }
 
-func mustCollectionName(t *testing.T, ctx context.Context, dataStore *Store, userID, collectionID, expected string) {
-	t.Helper()
-	var name string
-	if err := dataStore.withUserTx(ctx, userID, func(tx pgx.Tx) error {
-		return tx.QueryRow(ctx, `SELECT name FROM maps.collections WHERE id = $1`, collectionID).Scan(&name)
-	}); err != nil {
-		t.Fatalf("read collection name for %s: %v", userID, err)
-	}
-	if name != expected {
-		t.Fatalf("expected collection name %q, got %q", expected, name)
-	}
-}
-
-func mustVisibleItemCount(t *testing.T, ctx context.Context, dataStore *Store, userID, collectionID string, expected int) {
-	t.Helper()
-	var count int
-	if err := dataStore.withUserTx(ctx, userID, func(tx pgx.Tx) error {
-		return tx.QueryRow(ctx, `SELECT count(*) FROM maps.collection_items WHERE collection_id = $1`, collectionID).Scan(&count)
-	}); err != nil {
-		t.Fatalf("count collection items for %s: %v", userID, err)
-	}
-	if count != expected {
-		t.Fatalf("expected %d visible items for %s, got %d", expected, userID, count)
-	}
-}
-
 func mustSavedPlaceCount(t *testing.T, ctx context.Context, dataStore *Store, userID string, expected int) {
 	t.Helper()
 	var count int
@@ -336,4 +354,12 @@ func execMultiStatement(ctx context.Context, pool *pgxpool.Pool, sql string) err
 		}
 	}
 	return nil
+}
+
+func stringPointer(value string) *string {
+	return &value
+}
+
+func int64Pointer(value int64) *int64 {
+	return &value
 }
