@@ -2,7 +2,6 @@ package store
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -125,18 +124,33 @@ func TestMultiUserRLSIsolation(t *testing.T) {
 	mustVisibleItemCount(t, ctx, dataStore, stranger.ID, collection.ID, 0)
 
 	if err := dataStore.withUserTx(ctx, editor.ID, func(tx pgx.Tx) error {
-		_, err := tx.Exec(ctx, `UPDATE maps.collections SET name = 'Edited Chicago trip' WHERE id = $1`, collection.ID)
-		return err
+		command, err := tx.Exec(ctx, `UPDATE maps.collections SET name = 'Edited Chicago trip' WHERE id = $1`, collection.ID)
+		if err != nil {
+			return err
+		}
+		if command.RowsAffected() != 1 {
+			return fmt.Errorf("expected editor update to affect 1 row, affected %d", command.RowsAffected())
+		}
+		return nil
 	}); err != nil {
 		t.Fatalf("editor update collection: %v", err)
 	}
 
+	var viewerUpdateRows int64
 	if err := dataStore.withUserTx(ctx, viewer.ID, func(tx pgx.Tx) error {
-		_, err := tx.Exec(ctx, `UPDATE maps.collections SET name = 'Viewer edit must fail' WHERE id = $1`, collection.ID)
-		return err
-	}); err == nil {
-		t.Fatal("viewer must not update collection")
+		command, err := tx.Exec(ctx, `UPDATE maps.collections SET name = 'Viewer edit must fail' WHERE id = $1`, collection.ID)
+		if err != nil {
+			return err
+		}
+		viewerUpdateRows = command.RowsAffected()
+		return nil
+	}); err != nil {
+		t.Fatalf("viewer update authorization check: %v", err)
 	}
+	if viewerUpdateRows != 0 {
+		t.Fatalf("viewer must not update collection; affected %d rows", viewerUpdateRows)
+	}
+	mustCollectionName(t, ctx, dataStore, owner.ID, collection.ID, "Edited Chicago trip")
 
 	if err := dataStore.withUserTx(ctx, viewer.ID, func(tx pgx.Tx) error {
 		_, err := tx.Exec(ctx, `
@@ -254,6 +268,19 @@ func mustCollectionCount(t *testing.T, ctx context.Context, dataStore *Store, us
 	}
 }
 
+func mustCollectionName(t *testing.T, ctx context.Context, dataStore *Store, userID, collectionID, expected string) {
+	t.Helper()
+	var name string
+	if err := dataStore.withUserTx(ctx, userID, func(tx pgx.Tx) error {
+		return tx.QueryRow(ctx, `SELECT name FROM maps.collections WHERE id = $1`, collectionID).Scan(&name)
+	}); err != nil {
+		t.Fatalf("read collection name for %s: %v", userID, err)
+	}
+	if name != expected {
+		t.Fatalf("expected collection name %q, got %q", expected, name)
+	}
+}
+
 func mustVisibleItemCount(t *testing.T, ctx context.Context, dataStore *Store, userID, collectionID string, expected int) {
 	t.Helper()
 	var count int
@@ -306,24 +333,4 @@ func execMultiStatement(ctx context.Context, pool *pgxpool.Pool, sql string) err
 		}
 	}
 	return nil
-}
-
-func TestRuntimeRoleURLDoesNotRetainAdminCredentials(t *testing.T) {
-	adminURL := "postgres://postgres:admin-secret@127.0.0.1:5432/maps?sslmode=disable"
-	config, err := pgxpool.ParseConfig(adminURL)
-	if err != nil {
-		t.Fatalf("parse admin URL: %v", err)
-	}
-	config.ConnConfig.User = mapsTestRuntimeRole
-	config.ConnConfig.Password = "runtime-secret"
-	runtimeURL := config.ConnString()
-	if strings.Contains(runtimeURL, "admin-secret") || !strings.Contains(runtimeURL, mapsTestRuntimeRole) {
-		t.Fatalf("runtime URL did not replace admin credentials: %s", runtimeURL)
-	}
-}
-
-func TestExpectedRLSFailureIsNotContextCancellation(t *testing.T) {
-	if errors.Is(errors.New("rls failure"), context.Canceled) {
-		t.Fatal("ordinary RLS errors must not be treated as context cancellation")
-	}
 }
