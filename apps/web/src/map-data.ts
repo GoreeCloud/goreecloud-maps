@@ -1,3 +1,5 @@
+import type { StyleSpecification } from 'maplibre-gl';
+
 export type MapDataAttribution = {
   text: string;
   url?: string;
@@ -28,10 +30,14 @@ export type MapDataRelease = {
   manifest: MapDataManifest;
   manifestURL: string;
   styleURL: string;
+  style: StyleSpecification;
 };
 
 const maximumManifestBytes = 64 * 1024;
+const maximumStyleBytes = 2 * 1024 * 1024;
 const releaseIDPattern = /^[A-Za-z0-9][A-Za-z0-9._-]{0,79}$/;
+const spriteNamePattern = /^[A-Za-z0-9][A-Za-z0-9._@-]{0,119}$/;
+const spriteIDPattern = /^[A-Za-z0-9][A-Za-z0-9._@:-]{0,119}$/;
 const allowedManifestKeys = new Set([
   'schemaVersion',
   'releaseId',
@@ -151,6 +157,149 @@ const parseManifest = (value: unknown): MapDataManifest => {
   return value as MapDataManifest;
 };
 
+const readBoundedJSON = async (url: URL, maximumBytes: number, label: string, cache: RequestCache): Promise<unknown> => {
+  const response = await fetch(url, {
+    method: 'GET',
+    headers: { Accept: 'application/json' },
+    credentials: 'omit',
+    cache,
+    redirect: 'error',
+  });
+  if (!response.ok) throw new Error(`${label} request failed with status ${response.status}.`);
+
+  const contentLength = Number(response.headers.get('Content-Length'));
+  if (Number.isFinite(contentLength) && contentLength > maximumBytes) {
+    throw new Error(`${label} is too large.`);
+  }
+
+  const raw = await response.text();
+  if (new TextEncoder().encode(raw).byteLength > maximumBytes) {
+    throw new Error(`${label} is too large.`);
+  }
+  try {
+    return JSON.parse(raw) as unknown;
+  } catch {
+    throw new Error(`${label} is not valid JSON.`);
+  }
+};
+
+const escapeHTML = (value: string): string =>
+  value.replace(/[&<>'"]/g, (character) => {
+    const entities: Record<string, string> = {
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      "'": '&#39;',
+      '"': '&quot;',
+    };
+    return entities[character] ?? character;
+  });
+
+const manifestAttribution = (manifest: MapDataManifest): string =>
+  manifest.attribution
+    .map((entry) =>
+      entry.url
+        ? `<a href="${escapeHTML(entry.url)}" target="_blank" rel="noopener noreferrer">${escapeHTML(entry.text)}</a>`
+        : escapeHTML(entry.text),
+    )
+    .join(' · ');
+
+const absoluteReleaseResource = (raw: string, styleURL: URL, allowedRelative: RegExp, label: string): string => {
+  if (allowedRelative.test(raw)) return `${styleURL.toString().slice(0, styleURL.toString().lastIndexOf('/') + 1)}${raw}`;
+
+  let parsed: URL;
+  try {
+    parsed = new URL(raw);
+  } catch {
+    throw new Error(`${label} must remain within the immutable map-data release.`);
+  }
+  if (parsed.origin !== styleURL.origin || parsed.username || parsed.password || parsed.search || parsed.hash) {
+    throw new Error(`${label} escaped the configured map-data origin.`);
+  }
+  const releasePrefix = styleURL.pathname.slice(0, styleURL.pathname.lastIndexOf('/') + 1);
+  if (!parsed.pathname.startsWith(releasePrefix)) {
+    throw new Error(`${label} escaped the immutable map-data release path.`);
+  }
+  return parsed.toString();
+};
+
+const normalizeReleaseStyle = (value: unknown, manifest: MapDataManifest, styleURL: URL): StyleSpecification => {
+  if (!isRecord(value) || value.version !== 8 || !isRecord(value.sources) || !Array.isArray(value.layers)) {
+    throw new Error('Map-data style is not a valid MapLibre style foundation.');
+  }
+  if ('imports' in value || 'font-faces' in value) {
+    throw new Error('Map-data style v1 does not permit imported styles or external font-face resources.');
+  }
+
+  const releaseBase = styleURL.toString().slice(0, styleURL.toString().lastIndexOf('/') + 1);
+  const expectedTiles = `${releaseBase}tiles/{z}/{x}/{y}.pbf`;
+  const attribution = manifestAttribution(manifest);
+  let firstVectorSource = true;
+
+  for (const [sourceID, rawSource] of Object.entries(value.sources)) {
+    if (!isRecord(rawSource) || rawSource.type !== 'vector') {
+      throw new Error(`Map-data style source ${sourceID} must be a vector source in schema v1.`);
+    }
+    if ('url' in rawSource) {
+      throw new Error(`Map-data style source ${sourceID} must use the release tile template, not TileJSON.`);
+    }
+    if (!Array.isArray(rawSource.tiles) || rawSource.tiles.length !== 1 || typeof rawSource.tiles[0] !== 'string') {
+      throw new Error(`Map-data style source ${sourceID} must contain exactly one tile template.`);
+    }
+    const tileTemplate = rawSource.tiles[0];
+    if (tileTemplate !== 'tiles/{z}/{x}/{y}.pbf' && tileTemplate !== expectedTiles) {
+      throw new Error(`Map-data style source ${sourceID} does not use the declared release tiles.`);
+    }
+    rawSource.tiles = [expectedTiles];
+    rawSource.minzoom = manifest.minZoom;
+    rawSource.maxzoom = manifest.maxZoom;
+    rawSource.bounds = [...manifest.bounds];
+    rawSource.scheme = 'xyz';
+    rawSource.encoding = 'mvt';
+    if (firstVectorSource) {
+      rawSource.attribution = attribution;
+      firstVectorSource = false;
+    } else {
+      delete rawSource.attribution;
+    }
+  }
+
+  if (value.glyphs !== undefined) {
+    if (typeof value.glyphs !== 'string') throw new Error('Map-data glyph URL is invalid.');
+    value.glyphs = absoluteReleaseResource(
+      value.glyphs,
+      styleURL,
+      /^glyphs\/\{fontstack\}\/\{range\}\.pbf$/u,
+      'Map-data glyph URL',
+    );
+  }
+
+  if (value.sprite !== undefined) {
+    if (typeof value.sprite === 'string') {
+      if (!/^sprites\/[A-Za-z0-9][A-Za-z0-9._@-]{0,119}$/u.test(value.sprite)) {
+        value.sprite = absoluteReleaseResource(value.sprite, styleURL, /^sprites\/[A-Za-z0-9][A-Za-z0-9._@-]{0,119}$/u, 'Map-data sprite URL');
+      } else {
+        value.sprite = `${releaseBase}${value.sprite}`;
+      }
+    } else if (Array.isArray(value.sprite)) {
+      value.sprite = value.sprite.map((entry) => {
+        if (!isRecord(entry) || typeof entry.id !== 'string' || !spriteIDPattern.test(entry.id) || typeof entry.url !== 'string') {
+          throw new Error('Map-data sprite entry is invalid.');
+        }
+        const relativeMatch = entry.url.match(/^sprites\/([A-Za-z0-9][A-Za-z0-9._@-]{0,119})$/u);
+        const normalizedURL = relativeMatch && relativeMatch[1] && spriteNamePattern.test(relativeMatch[1])
+          ? `${releaseBase}${entry.url}`
+          : absoluteReleaseResource(entry.url, styleURL, /^sprites\/[A-Za-z0-9][A-Za-z0-9._@-]{0,119}$/u, 'Map-data sprite URL');
+        return { id: entry.id, url: normalizedURL };
+      });
+    } else {
+      throw new Error('Map-data sprite configuration is invalid.');
+    }
+  }
+
+  return value as unknown as StyleSpecification;
+};
+
 export const configuredMapDataManifestURL = (): string =>
   import.meta.env.VITE_MAP_DATA_MANIFEST_URL?.trim() ?? '';
 
@@ -159,32 +308,7 @@ export const resolveMapDataRelease = async (): Promise<MapDataRelease | null> =>
   if (!configured) return null;
 
   const requestedURL = validateConfiguredURL(configured);
-  const response = await fetch(requestedURL, {
-    method: 'GET',
-    headers: { Accept: 'application/json' },
-    credentials: 'omit',
-    cache: 'no-store',
-    redirect: 'error',
-  });
-  if (!response.ok) throw new Error(`Map-data manifest request failed with status ${response.status}.`);
-
-  const contentLength = Number(response.headers.get('Content-Length'));
-  if (Number.isFinite(contentLength) && contentLength > maximumManifestBytes) {
-    throw new Error('Map-data manifest is too large.');
-  }
-
-  const raw = await response.text();
-  if (new TextEncoder().encode(raw).byteLength > maximumManifestBytes) {
-    throw new Error('Map-data manifest is too large.');
-  }
-
-  let decoded: unknown;
-  try {
-    decoded = JSON.parse(raw);
-  } catch {
-    throw new Error('Map-data manifest is not valid JSON.');
-  }
-  const manifest = parseManifest(decoded);
+  const manifest = parseManifest(await readBoundedJSON(requestedURL, maximumManifestBytes, 'Map-data manifest', 'no-store'));
 
   const manifestURL = requestedURL.toString();
   const styleURL = new URL(manifest.stylePath, manifestURL);
@@ -192,9 +316,16 @@ export const resolveMapDataRelease = async (): Promise<MapDataRelease | null> =>
     throw new Error('Map-data style path escaped the configured release origin.');
   }
 
+  const style = normalizeReleaseStyle(
+    await readBoundedJSON(styleURL, maximumStyleBytes, 'Map-data style', 'force-cache'),
+    manifest,
+    styleURL,
+  );
+
   return {
     manifest,
     manifestURL,
     styleURL: styleURL.toString(),
+    style,
   };
 };
