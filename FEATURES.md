@@ -9,7 +9,7 @@ Status vocabulary: **Implemented**, **In progress**, **Planned**, or **Blocked b
 | Original GoreeCloud application model | Implemented | Repository and architecture prohibit a complete third-party application fork. |
 | Glaze UI 2.0.0 target | In progress | Web shell applies the current material/layout/accessibility contract; product-specific rendered acceptance remains required. |
 | Replaceable geospatial providers | In progress | Map-style seam plus Nominatim-compatible geocoding and Valhalla-compatible routing adapters are implemented; live provider deployment and acceptance remain pending. |
-| Multi-user tenancy model | In progress | Identity-subject mapping, owner/member roles, RLS policies, API runtime-role fail-closed checks, collection primitives, and automated PostGIS isolation acceptance are implemented; broader collaboration and production-runtime acceptance remain pending. |
+| Multi-user tenancy model | In progress | Identity-subject mapping, owner/member roles, RLS policies, collaboration APIs, runtime-role fail-closed checks, and automated PostGIS isolation acceptance are implemented; production Identity/database and UI acceptance remain pending. |
 | GoreeCloud Location boundary | Implemented | Maps and Location responsibilities are explicitly separated. |
 
 ## Map experience
@@ -75,10 +75,14 @@ The API now contains a normalized Valhalla-compatible route adapter for drive, w
 | OIDC-authenticated Maps users | In progress |
 | Per-user private saved data | In progress |
 | Shared collections | In progress |
-| Owner/editor/viewer roles | In progress |
+| Owner/editor/viewer roles | Implemented |
 | PostgreSQL row-level security | Implemented |
 | Runtime database privilege guard | Implemented |
-| Invitations and revocation | Planned |
+| Collection membership API | Implemented |
+| Collection item CRUD API | Implemented |
+| Optimistic revision conflict handling | Implemented |
+| Member removal/revocation | Implemented |
+| Invitations and identity-directory resolution | Planned |
 | Collaborative map annotations | Planned |
 | Shared route plans | Planned |
 | Household/group collections | Planned |
@@ -86,7 +90,9 @@ The API now contains a normalized Valhalla-compatible route adapter for drive, w
 | Optional ETA/location overlays through GoreeCloud Location | Planned |
 | Audit trail for security-sensitive sharing changes | In progress |
 
-Automated integration acceptance now runs the migration against PostGIS and exercises owner/editor/viewer/stranger isolation, private saved-place visibility, editor mutation, viewer mutation denial, membership authority, member self-removal, immutable collection ownership, and the non-owner/no-`BYPASSRLS` runtime-role guard. This validates the current source authorization model in CI; it does not replace production database, GoreeCloud Identity SSO, load, backup, or deployment acceptance.
+The authenticated collection API now supports collection updates, member listing/addition/role changes/removal, collection-item list/create/update/delete, and revision-conflict responses. Membership and item mutations emit collection audit events. Invitation delivery and identity-directory lookup are deliberately separate prerequisites rather than being approximated with an unrelated account-discovery system.
+
+Automated integration acceptance runs the migration against PostGIS and exercises owner/editor/viewer/stranger isolation, private saved-place visibility, collection revision conflicts, editor item creation/update/deletion, viewer mutation denial, owner-only membership administration, role demotion/restoration, member self-removal, immutable collection ownership, collaboration audit records, and the non-owner/no-`BYPASSRLS` runtime-role guard. This validates the current source authorization model in CI; it does not replace production database, GoreeCloud Identity SSO, load, backup, or deployment acceptance.
 
 ## Offline and resilience
 
