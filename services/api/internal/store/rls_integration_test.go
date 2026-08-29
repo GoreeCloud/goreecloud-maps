@@ -3,6 +3,7 @@ package store
 import (
 	"context"
 	"fmt"
+	"net/url"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -239,13 +240,15 @@ func createRuntimeRole(ctx context.Context, admin *pgxpool.Pool, adminURL string
 		}
 	}
 
-	config, err := pgxpool.ParseConfig(adminURL)
+	parsed, err := url.Parse(adminURL)
 	if err != nil {
 		return "", err
 	}
-	config.ConnConfig.User = mapsTestRuntimeRole
-	config.ConnConfig.Password = "maps-test-runtime"
-	return config.ConnString(), nil
+	if parsed.Scheme != "postgres" && parsed.Scheme != "postgresql" {
+		return "", fmt.Errorf("MAPS_TEST_DATABASE_URL must be a PostgreSQL URL")
+	}
+	parsed.User = url.UserPassword(mapsTestRuntimeRole, "maps-test-runtime")
+	return parsed.String(), nil
 }
 
 func resolveTestUser(t *testing.T, ctx context.Context, dataStore *Store, subject string) User {
