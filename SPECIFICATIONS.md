@@ -36,7 +36,21 @@ The map engine must support smooth pan, zoom, rotate, pitch, user-location displ
 
 Target capabilities include globe mode, terrain, 3D buildings, indoor layers, accessibility overlays, transit overlays, traffic/incident overlays, and satellite/aerial imagery when an approved provider and licensing model exist.
 
-The current web renderer remains intentionally useful in a data-empty development mode. A live geographic basemap requires an approved `VITE_MAP_STYLE_URL`; Maps must not silently fall back to a public map provider.
+The current web renderer remains intentionally useful in a data-empty development mode. `VITE_MAP_DATA_MANIFEST_URL` is the preferred live-release seam: when configured, the browser starts with the repository-local empty style, validates the public release manifest and immutable release style, and only then loads the normalized in-memory MapLibre style. `VITE_MAP_STYLE_URL` remains a manual/legacy approved-style seam when the manifest setting is empty. Maps must not silently fall back to a public map provider.
+
+### Public geographic data releases
+
+Public geographic data is a separate delivery domain from private/user Maps state.
+
+A map-data release uses an immutable release identifier with a short-cached mutable current pointer and immutable release objects for manifest, style, vector tiles, glyphs, and sprites. The manifest records release identity/generation time, geographic bounds, zoom range, style/tile paths, attribution, source datasets/versions/licenses/provenance, and a required public-geographic-data-only marker.
+
+Schema v1 is deliberately restricted to MapLibre Style Specification v8 and vector/MVT sources. Producer and browser validation require release-local `tiles/{z}/{x}/{y}.pbf`, disallow TileJSON indirection and style imports, disallow external font-face resources, and constrain glyph/sprite references to the immutable release path. The browser normalizes allowed release resources to the configured release origin and injects validated manifest attribution before MapLibre renders the style.
+
+A malformed, oversized, redirected, off-origin, off-release, unsupported, or unavailable configured release must fail closed to the local empty style. It must not cause automatic use of an unrelated public tile/style provider.
+
+Schema v1 is not the permanent format for every map capability. Raster/aerial imagery, terrain/raster-dem sources, PMTiles or other archive formats, future style imports, and additional source types require explicitly versioned later contracts plus their own licensing, privacy, security, performance, caching, offline, and deployment acceptance.
+
+The current repository contains only synthetic manifest/style fixtures. No generated basemap dataset or live geographic coverage is accepted by this specification state.
 
 ### Places and discovery
 
@@ -59,6 +73,8 @@ Turn-by-turn navigation is a separate acceptance boundary requiring runtime GPS 
 ### Offline
 
 Users must be able to select or download versioned regional map packages. Offline design must account for tiles, styles, glyphs/icons, place indexes, and routing graphs where supported. Packages require integrity metadata, versioning, quota management, update checks, rollback, and clean deletion.
+
+The current public release manifest establishes release identity, generation time, coverage, source/provenance and immutable resource paths that can later contribute to package freshness/integrity decisions, but it is not itself a downloadable/offline-region implementation.
 
 ### Collaboration
 
@@ -93,6 +109,8 @@ Location history must not be copied into Maps merely for convenience. Maps store
 
 The migration chain currently includes the multi-user/PostGIS foundation plus audit-event RLS hardening. CI must continue applying the complete ordered migration chain rather than testing only the first migration.
 
+Public geographic releases must not be stored as if they were user-owned Maps records. Public tile/style/glyph/sprite distribution and private PostGIS application state require separate authorization, caching, retention, backup, and operational policies.
+
 ## 6. Provider architecture
 
 Maps must expose internal interfaces for:
@@ -114,9 +132,11 @@ The preferred baseline uses open/self-hostable components and GoreeCloud-control
 
 The first implemented server adapters are Nominatim-compatible forward/reverse geocoding and Valhalla-compatible routing. Their base URLs are optional server-side configuration and are blank by default. Configured URLs must be absolute HTTP(S) URLs without embedded credentials, query parameters, or fragments; Maps appends fixed provider action paths. The implementation bounds HTTP timeout, response size, search limits, waypoint counts, and coordinate/query validation, and refuses upstream HTTP redirects.
 
-This application-level URL validation and redirect refusal are not a complete production SSRF defense. Production acceptance must add runtime egress restrictions and DNS-resolution controls, provider provenance/license terms, capacity/rate limits, secret handling where applicable, monitoring, Privacy Shield evidence, and Wardveil Security evidence.
+The public map-data provider boundary is release-oriented rather than exposing an arbitrary client-configurable tile origin. `mapdata/` defines the v1 release contract; `services/mapdata-edge` defines a read-only Worker/R2 source gateway for allowlisted public release objects. The web client independently validates the manifest/style boundary before rendering.
 
-Compatibility with an API shape does not authorize production use of an arbitrary public Nominatim, Valhalla, or other provider instance.
+This application-level URL/resource validation and redirect refusal are not a complete production network defense. Production acceptance must add runtime egress restrictions where relevant, DNS-resolution controls for server providers, production CORS/origin policy for public map data, provider/dataset provenance/license terms, capacity/rate limits, secret handling where applicable, monitoring, Privacy Shield evidence, and Wardveil Security evidence.
+
+Compatibility with an API or release shape does not authorize production use of an arbitrary public Nominatim, Valhalla, map tile, imagery, or other provider instance.
 
 ## 7. Platform integration
 
@@ -150,13 +170,15 @@ Cross-application coordination, capability discovery, and governed events should
 
 Privacy state must be evidence-backed. Requirements include data minimization, explicit sharing, revocation, clear precision controls, private-history options, provider disclosure where needed, and no hidden tracking.
 
+Public map-data releases must contain public geographic data only. Private searches, routes, saved places, collections, Identity state, and precise personal location are prohibited from the public release bundle.
+
 ### Wardveil Security
 
-Required controls include authenticated protected APIs, authorization at every resource boundary, rate limiting/abuse controls, input validation, SSRF-resistant provider access, secure secret handling, dependency review, and security-event evidence.
+Required controls include authenticated protected APIs, authorization at every resource boundary, rate limiting/abuse controls, input validation, SSRF-resistant provider access, constrained public-release resource loading, secure secret handling, dependency review, and security-event evidence.
 
 ### Everkeep
 
-User-owned saved places, collections, annotations, preferences, and other durable personal map data must have export, backup, restore, portability, and deletion semantics appropriate to the data class.
+User-owned saved places, collections, annotations, preferences, and other durable personal map data must have export, backup, restore, portability, and deletion semantics appropriate to the data class. Public immutable map releases have a separate continuity/rollback model and must not be confused with user-data backup semantics.
 
 ## 8. Glaze UI 2.0 mapping
 
@@ -166,9 +188,11 @@ Mobile composition uses a high-information map/viewing zone with primary reachab
 
 Desktop uses a denser sidebar/inspector model, keyboard shortcuts, pointer states, resizable panels, and contextual menus. Tablet/foldable layouts use split panes and hinge-aware placement. Reduced transparency/motion and effects-free modes must preserve complete usability.
 
-## 9. Web/API integration principles
+## 9. Web/API and public map-data integration principles
 
-The initial browser client uses a same-origin API path, defaulting to `/api/v1`. `VITE_MAPS_API_BASE_PATH` must begin with `/` and must not be an external or scheme-relative origin. This preserves a controlled reverse-proxy boundary and avoids runtime browser configuration that can redirect private bearer/API traffic to arbitrary origins.
+The initial browser API client uses a same-origin API path, defaulting to `/api/v1`. `VITE_MAPS_API_BASE_PATH` must begin with `/` and must not be an external or scheme-relative origin. This preserves a controlled reverse-proxy boundary and avoids runtime browser configuration that can redirect private bearer/API traffic to arbitrary origins.
+
+The public map-data release is a distinct browser boundary. `VITE_MAP_DATA_MANIFEST_URL` may identify an accepted same-origin or separate public geographic-data origin, but it must use HTTPS outside localhost, cannot contain credentials/query/fragment state, and is fetched without credentials with redirects refused. A configured release origin must not receive private Maps API bearer tokens.
 
 All protected APIs are versioned under `/api/v1/` initially. APIs use stable resource identifiers, explicit pagination where needed, structured errors, idempotency where retries are expected, optimistic concurrency or version fields for collaborative mutations, and server-side authorization.
 
@@ -201,19 +225,21 @@ The provider-dependent search/reverse/route routes require authenticated Maps us
 
 Precise location is sensitive. Logs must avoid recording precise coordinates, route origins/destinations, search queries, bearer tokens, OIDC codes, PKCE verifiers, share secrets, or private collection contents unless a specific operational requirement exists and the retention/privacy contract permits it.
 
-Public map tiles and user-private resources must use separate caching rules. Private responses must not become publicly cacheable through CDN configuration.
+Public map tiles and user-private resources must use separate caching rules. Private responses must not become publicly cacheable through CDN configuration. Public map-data release endpoints must never be authorized by private Maps bearer tokens.
 
 The initial provider error path records only an operation class rather than raw query text, coordinates, route waypoints, upstream bodies, or provider URLs. Collaboration storage failures also log the operation class rather than collection contents, member payloads, item coordinates, or notes. The browser source does not persist the bearer access token. Runtime observability must preserve this minimization contract.
 
-No browser client secret is permitted. Production deployment must separately validate CSP, reverse proxy behavior, CORS/header policy, token exposure surfaces, Identity redirect registrations, and network boundaries.
+No browser client secret is permitted. Production deployment must separately validate CSP, reverse proxy behavior, public map-data CORS/header policy, token exposure surfaces, Identity redirect registrations, Cloudflare/public-delivery configuration, and network boundaries.
 
 ## 11. Availability and resilience
 
 The application should remain useful during partial outages. Cached map content, saved places, offline regions, and previously downloaded route/map resources should degrade independently from live provider services.
 
-The UI must distinguish unavailable, stale, offline, delayed, approximate, unauthenticated, Identity-unconfigured, and unverified states instead of presenting all failures as empty results.
+The UI must distinguish unavailable, stale, offline, delayed, approximate, unauthenticated, Identity-unconfigured, map-release-invalid, and unverified states instead of presenting all failures as empty results.
 
 The provider API exposes configured/not-configured capability state so clients can distinguish a missing capability from a valid empty place/route result. No-provider operation remains an intentional supported development/degraded state.
+
+The public release model supports roll-forward/rollback by changing only the mutable current manifest pointer to an already accepted immutable release. Release objects must never be mutated in place after publication. Runtime cache and rollback behavior still require deployed acceptance evidence.
 
 The current browser disconnect action removes its local in-memory token only and must not be represented as provider-wide SSO logout. Provider logout/session management remains a later acceptance scope.
 
@@ -226,6 +252,9 @@ A Stable release requires, as applicable:
 - API authorization tests;
 - multi-user isolation tests;
 - database migration validation;
+- map-data manifest and style contract validation;
+- actual approved geographic dataset ingestion/build provenance;
+- actual immutable release publication and rollback acceptance;
 - actual GoreeCloud Identity Maps client registration and end-to-end login/session acceptance;
 - accessibility and keyboard testing;
 - reduced motion/transparency and forced-colors testing;
@@ -233,21 +262,23 @@ A Stable release requires, as applicable:
 - rendered map interaction acceptance;
 - provider failure/degraded-mode tests;
 - provider egress/SSRF acceptance;
-- provider license/provenance and attribution acceptance;
+- provider/dataset license/provenance and attribution acceptance;
 - route/geocoder geographic-quality acceptance for supported coverage;
+- public map-data CORS/cache/security acceptance;
 - privacy and security acceptance;
-- Everkeep export/restore acceptance;
-- Wardveil, Privacy Shield, Glaze UI, and Everkeep integration evidence;
+- Everkeep export/restore acceptance for applicable user data;
+- Wardveil, Privacy Shield, Glaze UI, Everkeep, and Mesh integration evidence where required;
 - native and real-device acceptance for native navigation releases.
 
 ## 13. Initial milestones
 
 1. Repository/product foundation and architecture contracts — source foundation established; review/merge remains gated.
-2. Web map shell with Glaze UI 2.0 semantics and replaceable map-style provider — initial shell and same-origin service surfaces established; rendered/live-provider acceptance pending.
+2. Web map shell with Glaze UI 2.0 semantics and replaceable map-data/style provider — initial shell, versioned map-data release resolver/validator, and same-origin service surfaces established; approved dataset publication and rendered/live-provider acceptance pending.
 3. Identity-backed multi-user API and PostGIS schema for saved places/collections — schema, collaboration APIs, optimistic revision handling, audit events, PKCE browser source, access-token API verification boundary, and automated multi-user/RLS PostGIS acceptance are established; actual Identity client registration, recipient directory/invitations, production database/Identity, load, backup, and deployment acceptance remain pending.
 4. Place discovery/geocoding provider and Search interoperability — Nominatim-compatible source adapter/API and initial web results are established; approved provider deployment, quality acceptance, rich place data, and GoreeCloud Search interoperability remain pending.
 5. Route planning provider and directions UI — Valhalla-compatible source adapter/API and initial web route rendering/maneuver summary are established; approved router deployment, route-quality acceptance, alternatives, advanced planning controls, and navigation remain pending.
-6. Offline region/package system.
-7. Live navigation and Location integration.
-8. Traffic/incidents/transit expansion.
-9. Native mobile applications and device acceptance.
+6. Geographic release generation/publication — implement an approved reproducible dataset ingestion/tile generation pipeline, provenance/license evidence, immutable publication, deployed Worker/R2 or accepted equivalent delivery, CORS/cache verification, and rollback acceptance.
+7. Offline region/package system.
+8. Live navigation and Location integration.
+9. Traffic/incidents/transit expansion.
+10. Native mobile applications and device acceptance.
