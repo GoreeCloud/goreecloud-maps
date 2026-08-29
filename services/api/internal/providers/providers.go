@@ -110,6 +110,9 @@ func NewSet(geocoderBaseURL, routerBaseURL, clientID string) (Set, error) {
 		router:   router,
 		client: &http.Client{
 			Timeout: 6 * time.Second,
+			CheckRedirect: func(_ *http.Request, _ []*http.Request) error {
+				return http.ErrUseLastResponse
+			},
 		},
 		clientID: strings.TrimSpace(clientID),
 	}, nil
