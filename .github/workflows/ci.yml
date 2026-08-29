@@ -39,6 +39,34 @@ jobs:
       - name: Build web client
         run: npm run build
 
+  mapdata:
+    name: Map data edge contract
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    defaults:
+      run:
+        working-directory: services/mapdata-edge
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          package-manager-cache: false
+
+      - name: Install edge dependencies
+        run: npm install --ignore-scripts --no-audit --no-fund
+
+      - name: Validate release-manifest fixture
+        run: node ../../scripts/validate-mapdata-release.mjs ../../mapdata/examples/release-manifest.example.json
+
+      - name: Type-check and dry-run Worker bundle
+        run: npm run check
+
   api:
     name: API and PostGIS tests
     runs-on: ubuntu-latest
