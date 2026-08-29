@@ -47,12 +47,8 @@ func TestMultiUserRLSIsolation(t *testing.T) {
 		}
 	}()
 
-	migration, err := os.ReadFile(migrationPath(t))
-	if err != nil {
-		t.Fatalf("read migration: %v", err)
-	}
-	if err := execMultiStatement(ctx, admin, string(migration)); err != nil {
-		t.Fatalf("apply migration: %v", err)
+	if err := applyMigrations(ctx, admin, migrationDir(t)); err != nil {
+		t.Fatalf("apply migrations: %v", err)
 	}
 
 	if ownerStore, err := Open(ctx, adminURL); err == nil {
@@ -91,6 +87,16 @@ func TestMultiUserRLSIsolation(t *testing.T) {
 	mustCollectionCount(t, ctx, dataStore, editor.ID, 0)
 	mustCollectionCount(t, ctx, dataStore, viewer.ID, 0)
 	mustCollectionCount(t, ctx, dataStore, stranger.ID, 0)
+
+	if err := dataStore.withUserTx(ctx, stranger.ID, func(tx pgx.Tx) error {
+		_, err := tx.Exec(ctx, `
+			INSERT INTO maps.audit_events (actor_user_id, collection_id, event_type, event_data)
+			VALUES ($1::uuid, $2::uuid, 'forged.audit', '{}'::jsonb)
+		`, stranger.ID, collection.ID)
+		return err
+	}); err == nil {
+		t.Fatal("stranger must not forge audit events for an inaccessible collection")
+	}
 
 	if _, err := dataStore.AddCollectionMember(ctx, owner.ID, collection.ID, editor.ID, "editor"); err != nil {
 		t.Fatalf("owner add editor: %v", err)
@@ -328,13 +334,33 @@ func mustSavedPlaceCount(t *testing.T, ctx context.Context, dataStore *Store, us
 	}
 }
 
-func migrationPath(t *testing.T) string {
+func migrationDir(t *testing.T) string {
 	t.Helper()
 	_, filename, _, ok := runtime.Caller(0)
 	if !ok {
 		t.Fatal("resolve integration test path")
 	}
-	return filepath.Clean(filepath.Join(filepath.Dir(filename), "../../../..", "db", "migrations", "0001_multi_user_foundation.sql"))
+	return filepath.Clean(filepath.Join(filepath.Dir(filename), "../../../..", "db", "migrations"))
+}
+
+func applyMigrations(ctx context.Context, pool *pgxpool.Pool, directory string) error {
+	entries, err := os.ReadDir(directory)
+	if err != nil {
+		return err
+	}
+	for _, entry := range entries {
+		if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".sql") {
+			continue
+		}
+		migration, err := os.ReadFile(filepath.Join(directory, entry.Name()))
+		if err != nil {
+			return fmt.Errorf("read %s: %w", entry.Name(), err)
+		}
+		if err := execMultiStatement(ctx, pool, string(migration)); err != nil {
+			return fmt.Errorf("apply %s: %w", entry.Name(), err)
+		}
+	}
+	return nil
 }
 
 func execMultiStatement(ctx context.Context, pool *pgxpool.Pool, sql string) error {
