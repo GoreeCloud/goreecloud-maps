@@ -1,12 +1,28 @@
 package httpapi
 
 import (
+	"log/slog"
 	"net/http"
 	"strconv"
 	"strings"
 
+	"github.com/GoreeCloud/goreecloud-maps/services/api/internal/auth"
 	"github.com/GoreeCloud/goreecloud-maps/services/api/internal/store"
 )
+
+// NewSavedPlaces exposes the owner-scoped saved-place surface as a composable
+// subrouter. This keeps the feature isolated from unrelated provider routes
+// while sharing the same Identity verifier and RLS-backed store.
+func NewSavedPlaces(logger *slog.Logger, dataStore *store.Store, verifier *auth.Verifier) http.Handler {
+	server := &Server{
+		logger:   logger,
+		store:    dataStore,
+		verifier: verifier,
+		mux:      http.NewServeMux(),
+	}
+	server.registerSavedPlaceRoutes()
+	return server.securityHeaders(server.mux)
+}
 
 func (s *Server) registerSavedPlaceRoutes() {
 	s.mux.HandleFunc("GET /api/v1/saved-places", s.listSavedPlaces)
