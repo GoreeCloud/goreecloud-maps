@@ -4,6 +4,7 @@ import './styles.css';
 import './integration.css';
 import { MapsAPI, MapsApiError, type Collection, type Route, type SearchResult } from './api';
 import { IdentityClient } from './auth';
+import { configuredMapDataManifestURL, resolveMapDataRelease } from './map-data';
 
 const app = document.querySelector<HTMLDivElement>('#app');
 if (!app) throw new Error('Maps application root was not found.');
@@ -111,11 +112,12 @@ app.innerHTML = `
   </main>
 `;
 
-const configuredStyle = import.meta.env.VITE_MAP_STYLE_URL?.trim();
-const style = configuredStyle || '/map-style.json';
+const configuredManifest = configuredMapDataManifestURL();
+const configuredStyle = import.meta.env.VITE_MAP_STYLE_URL?.trim() ?? '';
+const initialStyle = configuredManifest ? '/map-style.json' : configuredStyle || '/map-style.json';
 const map = new maplibregl.Map({
   container: 'map',
-  style,
+  style: initialStyle,
   center: [0, 20],
   zoom: 1.7,
   attributionControl: false,
@@ -130,6 +132,15 @@ const api = new MapsAPI(() => identity.getAccessToken());
 let capabilities = { geocoding: false, routing: false };
 let apiReachable = false;
 let selectedMarker: maplibregl.Marker | null = null;
+type MapDataState = {
+  mode: 'local' | 'direct' | 'resolving' | 'release' | 'error';
+  releaseId?: string;
+};
+let mapDataState: MapDataState = configuredManifest
+  ? { mode: 'resolving' }
+  : configuredStyle
+    ? { mode: 'direct' }
+    : { mode: 'local' };
 
 const escapeHTML = (value: string): string =>
   value.replace(/[&<>'"]/g, (character) => {
@@ -159,6 +170,21 @@ const setIntegrationContent = (content: string): void => {
   });
 };
 
+const mapDataStatusLabel = (): string => {
+  switch (mapDataState.mode) {
+    case 'release':
+      return `release ${mapDataState.releaseId ?? 'active'}`;
+    case 'direct':
+      return 'direct style';
+    case 'resolving':
+      return 'checking release';
+    case 'error':
+      return 'release unavailable';
+    case 'local':
+      return 'local fallback';
+  }
+};
+
 const renderExplore = (): void => {
   setIntegrationContent(`
     <div class="integration-heading">
@@ -168,7 +194,7 @@ const renderExplore = (): void => {
       </div>
     </div>
     <div class="result-meta">
-      <span class="status-pill">Map style: ${configuredStyle ? 'configured' : 'local fallback'}</span>
+      <span class="status-pill">Map data: ${escapeHTML(mapDataStatusLabel())}</span>
       <span class="status-pill">Geocoding: ${capabilities.geocoding ? 'configured' : 'unavailable'}</span>
       <span class="status-pill">Routing: ${capabilities.routing ? 'configured' : 'unavailable'}</span>
       <span class="status-pill">Identity: ${identity.configured ? (identity.authenticated ? 'signed in' : 'available') : 'not registered'}</span>
@@ -216,9 +242,19 @@ const updateProviderStatus = (): void => {
   const title = document.querySelector<HTMLElement>('[data-provider-title]');
   const copy = document.querySelector<HTMLElement>('[data-provider-copy]');
   if (!title || !copy) return;
+  if (mapDataState.mode === 'error') {
+    title.textContent = 'Map data release unavailable';
+    copy.textContent = 'The configured release manifest was rejected or unavailable, so Maps kept the privacy-safe local empty style.';
+    return;
+  }
+  if (mapDataState.mode === 'resolving') {
+    title.textContent = 'Checking map data release…';
+    copy.textContent = 'Maps is validating the configured public geographic-data manifest before loading its immutable style release.';
+    return;
+  }
   if (!apiReachable) {
     title.textContent = 'Maps API unavailable';
-    copy.textContent = 'The browser is using the local renderer fallback. Search, routing, and collaboration remain unavailable until the same-origin Maps API is reachable.';
+    copy.textContent = 'The renderer remains available, but search, routing, and collaboration require the same-origin Maps API.';
     return;
   }
   if (!capabilities.geocoding && !capabilities.routing) {
@@ -228,6 +264,37 @@ const updateProviderStatus = (): void => {
   }
   title.textContent = 'Maps service capabilities available';
   copy.textContent = `Geocoding ${capabilities.geocoding ? 'is configured' : 'is unavailable'}; routing ${capabilities.routing ? 'is configured' : 'is unavailable'}. Provider origins remain server-side.`;
+};
+
+const applyConfiguredMapData = async (): Promise<void> => {
+  if (!configuredManifest) return;
+  try {
+    const release = await resolveMapDataRelease();
+    if (!release) {
+      mapDataState = { mode: 'local' };
+      return;
+    }
+    mapDataState = { mode: 'release', releaseId: release.manifest.releaseId };
+    const apply = (): void => {
+      map.setStyle(release.styleURL);
+      const [west, south, east, north] = release.manifest.bounds;
+      const globalCoverage = west <= -179.9 && east >= 179.9 && south <= -84 && north >= 84;
+      if (!globalCoverage) {
+        map.fitBounds(
+          [
+            [west, south],
+            [east, north],
+          ],
+          { padding: 48, maxZoom: Math.min(release.manifest.maxZoom, 12), duration: 0 },
+        );
+      }
+    };
+    if (map.isStyleLoaded()) apply();
+    else map.once('load', apply);
+  } catch (error) {
+    mapDataState = { mode: 'error' };
+    showToast(error instanceof Error ? error.message : 'The configured map-data release could not be loaded.');
+  }
 };
 
 const startSignIn = async (): Promise<void> => {
@@ -592,6 +659,7 @@ const bootstrap = async (): Promise<void> => {
   } catch {
     apiReachable = false;
   }
+  await applyConfiguredMapData();
   updateProviderStatus();
   renderExplore();
 };
