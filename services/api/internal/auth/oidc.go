@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/coreos/go-oidc/v3/oidc"
+	"golang.org/x/oauth2"
 )
 
 var (
@@ -15,7 +16,8 @@ var (
 )
 
 type Verifier struct {
-	idTokens *oidc.IDTokenVerifier
+	provider *oidc.Provider
+	tokens   *oidc.IDTokenVerifier
 }
 
 func NewVerifier(ctx context.Context, issuerURL, clientID string) (*Verifier, error) {
@@ -25,7 +27,8 @@ func NewVerifier(ctx context.Context, issuerURL, clientID string) (*Verifier, er
 	}
 
 	return &Verifier{
-		idTokens: provider.Verifier(&oidc.Config{ClientID: clientID}),
+		provider: provider,
+		tokens:   provider.Verifier(&oidc.Config{ClientID: clientID}),
 	}, nil
 }
 
@@ -36,17 +39,23 @@ func (v *Verifier) Subject(r *http.Request) (string, error) {
 	}
 
 	scheme, rawToken, found := strings.Cut(authorization, " ")
-	if !found || !strings.EqualFold(scheme, "Bearer") || strings.TrimSpace(rawToken) == "" {
+	rawToken = strings.TrimSpace(rawToken)
+	if !found || !strings.EqualFold(scheme, "Bearer") || rawToken == "" {
 		return "", ErrInvalidBearerToken
 	}
 
-	idToken, err := v.idTokens.Verify(r.Context(), strings.TrimSpace(rawToken))
-	if err != nil {
-		return "", ErrInvalidBearerToken
-	}
-	if strings.TrimSpace(idToken.Subject) == "" {
+	verified, err := v.tokens.Verify(r.Context(), rawToken)
+	if err != nil || strings.TrimSpace(verified.Subject) == "" {
 		return "", ErrInvalidBearerToken
 	}
 
-	return idToken.Subject, nil
+	userInfo, err := v.provider.UserInfo(
+		r.Context(),
+		oauth2.StaticTokenSource(&oauth2.Token{AccessToken: rawToken, TokenType: "Bearer"}),
+	)
+	if err != nil || strings.TrimSpace(userInfo.Subject) == "" || userInfo.Subject != verified.Subject {
+		return "", ErrInvalidBearerToken
+	}
+
+	return verified.Subject, nil
 }
