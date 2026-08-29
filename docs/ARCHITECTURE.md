@@ -27,7 +27,7 @@ GoreeCloud Location is adjacent to this diagram rather than inside the Maps data
 
 The default `public/map-style.json` has no remote sources. A live map only appears when `VITE_MAP_STYLE_URL` is set to an approved MapLibre-compatible style endpoint. This is intentional: cloning the repository must not silently disclose the user's IP address, viewport, or map activity to an unrelated public tile service.
 
-The web search and directions controls are not yet connected to the provider-backed API. A server-side provider implementation therefore does not yet constitute an end-to-end place-search or directions experience.
+The web search, directions, and collaboration controls are not yet connected to the protected API. Server-side provider and collaboration implementations therefore do not yet constitute end-to-end place-search, directions, or shared-map user experiences.
 
 ## API
 
@@ -42,15 +42,23 @@ The API does not accept a user ID from the client as an authorization authority.
 
 The service intentionally exits at startup when the configured database role can own/bypass the RLS-protected tables.
 
-Initial provider-backed application routes now include authenticated forward geocoding, reverse geocoding, and route planning. A public capabilities route reports only whether geocoding/routing are configured; it does not expose provider origins or credentials. Provider-dependent protected routes remain unavailable when no approved endpoint is configured.
+Implemented protected collaboration surfaces include collection list/create/update, member list/add/role-change/removal, and collection-item list/create/update/delete. Collection and item mutations use explicit expected revisions for optimistic conflict detection. Member addition accepts an existing Maps user ID; invitation delivery and governed GoreeCloud Identity/directory resolution are separate future capabilities rather than hidden account-discovery behavior.
+
+Initial provider-backed application routes include authenticated forward geocoding, reverse geocoding, and route planning. A public capabilities route reports only whether geocoding/routing are configured; it does not expose provider origins or credentials. Provider-dependent protected routes remain unavailable when no approved endpoint is configured.
 
 ## Database and multi-user authorization
 
 `db/migrations/0001_multi_user_foundation.sql` introduces first-party spatial and collaborative state. The initial model includes users, preferences, saved places, collections, collection members, collection items, and security-sensitive audit events.
 
-Map collections have one immutable owner and optional `editor` or `viewer` members. Ownership transfer is deliberately unsupported in the first migration; it requires a dedicated future transaction and audit contract.
+`db/migrations/0002_audit_event_rls_hardening.sql` tightens audit-event insertion: an authenticated actor may write a collection-scoped audit event only when that actor has access to the referenced collection. This prevents a compromised ordinary runtime session from forging audit records against an unrelated collection merely by knowing its identifier.
+
+Map collections have one immutable owner and optional `editor` or `viewer` members. Owners manage membership; editors may mutate collection content; viewers are read-only and may remove their own membership. Ownership transfer remains deliberately unsupported until a dedicated transaction and audit contract is designed.
+
+Collection and collection-item revisions provide the current concurrency boundary. Stale collaborative updates are rejected rather than silently overwriting newer state. Implemented member and item mutations emit audit events without placing private collection contents, coordinates, notes, or provider payloads into application logs.
 
 The database owner/migration role and API runtime role must be separate. The RLS helper used to evaluate collection membership is a narrowly scoped security-definer function. Production database acceptance must verify that the runtime role neither owns the protected tables nor holds `BYPASSRLS`.
+
+CI applies every ordered SQL migration in `db/migrations` to an ephemeral PostGIS service and exercises the application store through owner/editor/viewer/stranger principals. The current test scope covers collection visibility, role changes, allowed/denied mutations, optimistic conflicts, private saved-place isolation, self-removal, immutable ownership, audit creation, forged-audit rejection, and the runtime-role privilege guard. This is source-level automated acceptance, not production database acceptance.
 
 ## Provider boundary
 
@@ -61,9 +69,9 @@ Implemented initial server-side provider adapters are:
 - a Nominatim-compatible forward/reverse geocoding adapter using fixed `/search` and `/reverse` actions;
 - a Valhalla-compatible route adapter using fixed `/route`, normalized for drive, walk, bicycle, and transit/multimodal modes.
 
-These adapters are configured only by server-side environment values. No provider origin is enabled by default. Base URLs must be absolute HTTP(S) origins/paths without embedded credentials, query strings, or fragments. Requests have bounded timeouts/responses and validation, and provider failures are logged by operation class without map searches, coordinates, route origins/destinations, or provider URLs.
+These adapters are configured only by server-side environment values. No provider origin is enabled by default. Base URLs must be absolute HTTP(S) origins/paths without embedded credentials, query strings, or fragments. Requests have bounded timeouts/responses and validation, provider HTTP redirects are refused, and provider failures are logged by operation class without map searches, coordinates, route origins/destinations, or provider URLs.
 
-This source boundary is not a complete production SSRF/egress control. Approved production deployment still requires network-level egress controls, redirect/DNS review, licensing/provenance acceptance, capacity/rate-limit controls, and Privacy Shield/Wardveil evidence. See `docs/PROVIDERS.md`.
+This source boundary is not a complete production SSRF/egress control. Approved production deployment still requires network-level egress controls, DNS review, licensing/provenance acceptance, capacity/rate-limit controls, and Privacy Shield/Wardveil evidence. See `docs/PROVIDERS.md`.
 
 Additional planned adapter boundaries include:
 
@@ -84,13 +92,15 @@ GoreeCloud Identity establishes authentication. Maps owns authorization. Maps th
 
 GoreeCloud Identity is still completing GoreeCloud-wide production SSO acceptance. Maps may develop against its OIDC-compatible integration contract without claiming that production SSO is already approved.
 
+Future invitations must resolve recipients through an approved Identity/directory capability. Maps must not create an unrelated user-search authority or expose identity-subject identifiers as a substitute for a governed invitation experience.
+
 ## Privacy boundary
 
-Precise user location, origins/destinations, private route plans, saved places, and map searches can be sensitive. They must not become ordinary logs, analytics payloads, provider debug strings, cache keys exposed across users, or public CDN objects.
+Precise user location, origins/destinations, private route plans, saved places, map searches, collection notes, and membership relationships can be sensitive. They must not become ordinary logs, analytics payloads, provider debug strings, cache keys exposed across users, or public CDN objects.
 
 Public map resources and private user resources require separate cache and authorization policies. External provider calls must be documented with data-minimization and provenance requirements before production use.
 
-The initial provider handlers intentionally avoid logging raw search queries, precise coordinates, route waypoints, provider response bodies, and provider endpoint URLs. This is a source-level minimization control, not a substitute for runtime observability/privacy acceptance.
+Provider handlers intentionally avoid logging raw search queries, precise coordinates, route waypoints, provider response bodies, and provider endpoint URLs. Collaboration storage errors similarly log only an operation class, not member IDs, collection contents, precise item coordinates, or notes. These are source-level minimization controls, not substitutes for runtime observability/privacy acceptance.
 
 ## Resilience
 
