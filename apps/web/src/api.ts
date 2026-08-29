@@ -43,6 +43,39 @@ export type Route = {
   legs: RouteLeg[];
 };
 
+export type SavedPlace = {
+  id: string;
+  provider: string;
+  providerPlaceId?: string;
+  name: string;
+  address?: string;
+  latitude: number;
+  longitude: number;
+  note?: string;
+  revision: number;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type CreateSavedPlaceInput = {
+  provider: string;
+  providerPlaceId?: string;
+  name: string;
+  address?: string;
+  latitude: number;
+  longitude: number;
+  note?: string;
+};
+
+export type UpdateSavedPlaceInput = {
+  name?: string;
+  address?: string;
+  latitude?: number;
+  longitude?: number;
+  note?: string;
+  expectedRevision: number;
+};
+
 export type Collection = {
   id: string;
   name: string;
@@ -111,6 +144,32 @@ export class MapsAPI {
     });
   }
 
+  async listSavedPlaces(): Promise<SavedPlace[]> {
+    const response = await this.request<{ savedPlaces: SavedPlace[] }>('/saved-places');
+    return response.savedPlaces;
+  }
+
+  async createSavedPlace(input: CreateSavedPlaceInput): Promise<SavedPlace> {
+    return this.request('/saved-places', {
+      method: 'POST',
+      body: JSON.stringify(input),
+    });
+  }
+
+  async updateSavedPlace(savedPlaceID: string, input: UpdateSavedPlaceInput): Promise<SavedPlace> {
+    return this.request(`/saved-places/${encodeURIComponent(savedPlaceID)}`, {
+      method: 'PATCH',
+      body: JSON.stringify(input),
+    });
+  }
+
+  async deleteSavedPlace(savedPlaceID: string, expectedRevision: number): Promise<void> {
+    const params = new URLSearchParams({ expectedRevision: String(expectedRevision) });
+    await this.request<void>(`/saved-places/${encodeURIComponent(savedPlaceID)}?${params.toString()}`, {
+      method: 'DELETE',
+    });
+  }
+
   async listCollections(): Promise<Collection[]> {
     const response = await this.request<{ collections: Collection[] }>('/collections');
     return response.collections;
@@ -158,6 +217,7 @@ export class MapsAPI {
       }
       throw new MapsApiError(code, response.status, message);
     }
+    if (response.status === 204) return undefined as T;
     return (await response.json()) as T;
   }
 }
