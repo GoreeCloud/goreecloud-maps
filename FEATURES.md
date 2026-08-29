@@ -8,7 +8,7 @@ Status vocabulary: **Implemented**, **In progress**, **Planned**, or **Blocked b
 |---|---|---|
 | Original GoreeCloud application model | Implemented | Repository and architecture prohibit a complete third-party application fork. |
 | Glaze UI 2.0.0 target | In progress | Web shell applies the current material/layout/accessibility contract; product-specific rendered acceptance remains required. |
-| Replaceable geospatial providers | In progress | Provider boundaries and configurable MapLibre style seam are implemented; live provider adapters remain pending. |
+| Replaceable geospatial providers | In progress | Map-style seam plus Nominatim-compatible geocoding and Valhalla-compatible routing adapters are implemented; live provider deployment and acceptance remain pending. |
 | Multi-user tenancy model | In progress | Identity-subject mapping, owner/member roles, RLS policies, API runtime-role fail-closed checks, and collection list/create primitives are implemented; broader collaboration acceptance remains pending. |
 | GoreeCloud Location boundary | Implemented | Maps and Location responsibilities are explicitly separated. |
 
@@ -33,8 +33,8 @@ The current renderer shell is functional but uses a local data-empty style unles
 
 | Feature | Status |
 |---|---|
-| Forward geocoding | Planned |
-| Reverse geocoding | Planned |
+| Forward geocoding | In progress |
+| Reverse geocoding | In progress |
 | Nearby/category search | Planned |
 | Rich place cards | Planned |
 | Favorites and saved places | In progress |
@@ -44,17 +44,17 @@ The current renderer shell is functional but uses a local data-empty style unles
 | Place correction/feedback workflow | Planned |
 | Search integration with GoreeCloud Search | Planned |
 
-Saved-place and collection storage primitives exist in the first migration. Saved-place API/UI workflows remain pending.
+Forward and reverse geocoding now have authenticated Maps API routes and a normalized Nominatim-compatible provider adapter. No live geocoder endpoint is configured or production-accepted, and the web search UI is not yet connected to this API. Saved-place and collection storage primitives exist in the first migration; saved-place API/UI workflows remain pending.
 
 ## Directions and navigation
 
 | Feature | Status |
 |---|---|
-| Driving routes | Planned |
-| Walking routes | Planned |
-| Cycling routes | Planned |
-| Transit routes | Planned |
-| Multimodal itineraries | Planned |
+| Driving routes | In progress |
+| Walking routes | In progress |
+| Cycling routes | In progress |
+| Transit routes | In progress |
+| Multimodal itineraries | In progress |
 | Route alternatives | Planned |
 | Departure/arrival-time planning | Planned |
 | Avoid tolls/highways/ferries and other supported constraints | Planned |
@@ -65,6 +65,8 @@ Saved-place and collection storage primitives exist in the first migration. Save
 | Speed-limit presentation | Planned |
 | Incident/closure warnings | Planned |
 | EV charging-aware routing | Planned |
+
+The API now contains a normalized Valhalla-compatible route adapter for drive, walk, bicycle, and transit/multimodal costing, including distance, duration, encoded shape, and maneuver data. No live router endpoint, directions UI, navigation runtime, or route-quality acceptance exists yet.
 
 ## Multi-user and collaboration
 
