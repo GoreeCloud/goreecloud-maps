@@ -2,7 +2,7 @@
 
 ## 1. Status and authority
 
-GoreeCloud Maps is in **Development**. This specification describes the required product and engineering direction; it does not assert that every listed capability is implemented.
+GoreeCloud Maps is in **Development**. This specification describes the required product and engineering direction; it does not assert that every listed capability is production implemented.
 
 The application targets Glaze UI 2.0.0 Stable and must complete application-specific acceptance before any Stable or production-ready claim.
 
@@ -26,7 +26,7 @@ Required sharing scopes:
 
 Collaborative resources use explicit roles: `owner`, `editor`, and `viewer`. Authorization must be checked server-side for every protected read or mutation. Possession of an object identifier must never grant access.
 
-The current source authorization model has automated PostGIS integration coverage for owner/editor/viewer/stranger collection visibility, collection revision conflicts, editor item creation/update/deletion, viewer mutation denial, owner-only membership administration, role changes, member self-removal, private saved-place isolation, collaboration audit records, immutable collection ownership, and refusal of a database-owner/`BYPASSRLS` runtime connection. This is source-level CI acceptance; production database, GoreeCloud Identity SSO, deployment, load, backup, and recovery acceptance remain separate gates.
+The current source authorization model has automated PostGIS integration coverage for owner/editor/viewer/stranger collection visibility, collection revision conflicts, editor item creation/update/deletion, viewer mutation denial, owner-only membership administration, role changes, member self-removal, private saved-place isolation, collaboration audit records, forged-audit rejection, immutable collection ownership, and refusal of a database-owner/`BYPASSRLS` runtime connection. This is source-level CI acceptance; production database, GoreeCloud Identity SSO, deployment, load, backup, and recovery acceptance remain separate gates.
 
 ## 4. Core domains
 
@@ -36,21 +36,25 @@ The map engine must support smooth pan, zoom, rotate, pitch, user-location displ
 
 Target capabilities include globe mode, terrain, 3D buildings, indoor layers, accessibility overlays, transit overlays, traffic/incident overlays, and satellite/aerial imagery when an approved provider and licensing model exist.
 
+The current web renderer remains intentionally useful in a data-empty development mode. A live geographic basemap requires an approved `VITE_MAP_STYLE_URL`; Maps must not silently fall back to a public map provider.
+
 ### Places and discovery
 
 The application must support forward and reverse geocoding, category search, nearby discovery, place cards, hours/contact metadata when licensed, accessibility metadata, saved places, favorites, user notes, collections, and place-data correction feedback.
 
 Search results must identify provider/source provenance where required and must not silently combine incompatible licensing terms.
 
-The initial source implementation includes authenticated forward and reverse geocoding API routes backed by a normalized Nominatim-compatible adapter. This is an **In progress** capability: no live geocoder endpoint, Search interoperability, web-result UI, geographic-quality acceptance, or production provider approval is claimed.
+The source implementation includes authenticated forward and reverse geocoding API routes backed by a normalized Nominatim-compatible adapter. The web search form and initial category actions call the same-origin Maps API after authentication, render normalized results, and can center/mark a selected result on the map. Category actions currently submit ordinary search text rather than a dedicated nearby/POI ranking contract. No live geocoder endpoint, geographic-quality acceptance, GoreeCloud Search interoperability, rich place-card provider, or production provider approval is claimed.
 
 ### Directions and navigation
 
 The routing boundary must support driving, walking, cycling, transit, and multimodal itineraries where data coverage exists. Route responses should support alternatives, ETAs, distance/duration, maneuvers, geometry, accessibility constraints, avoidances, departure/arrival time, and route warnings.
 
-The initial source implementation includes an authenticated route-planning API and a normalized Valhalla-compatible adapter for drive, walk, bicycle, and transit/multimodal costing. It currently normalizes route/leg distance and duration, encoded route shape, maneuvers, street names, and shape indexes. Live routing coverage, route-quality acceptance, alternatives, advanced constraints, directions UI, and navigation runtime remain pending.
+The source implementation includes an authenticated route-planning API and a normalized Valhalla-compatible adapter for drive, walk, bicycle, and transit/multimodal costing. It currently normalizes route/leg distance and duration, encoded route shape, maneuvers, street names, and shape indexes.
 
-Turn-by-turn navigation is a separate acceptance boundary requiring runtime GPS integration, rerouting, off-route detection, maneuver guidance, background/lock-screen behavior where supported, and verified real-device testing.
+The web source includes an initial directions experience that geocodes an origin/destination, requests a route, decodes returned polyline6 geometry, renders the route when the map is ready, fits the viewport, and presents a bounded maneuver summary. This is not turn-by-turn navigation. No approved live router, traffic-aware ETA, route alternatives, advanced constraints, route-quality acceptance, location runtime, or real-device navigation acceptance is claimed.
+
+Turn-by-turn navigation is a separate acceptance boundary requiring runtime GPS integration through GoreeCloud Location, rerouting, off-route detection, maneuver guidance, background/lock-screen behavior where supported, and verified real-device testing.
 
 ### Offline
 
@@ -60,7 +64,11 @@ Users must be able to select or download versioned regional map packages. Offlin
 
 Users must be able to create collections and shared maps, add places, annotate entries, reorder content, invite/remove members, alter member roles, and revoke sharing. Conflict handling must be deterministic and auditable.
 
-The current source implements authenticated collection updates with expected revisions, member listing/addition/role changes/removal, and collection-item list/create/update/delete. Owner/editor/viewer authorization is enforced by application role checks and PostgreSQL row-level security. Collection and item edits use optimistic revision conflicts, and implemented membership/item mutations emit collection audit events. Invitation delivery, identity-directory resolution, share-link workflows, ownership transfer, collaborative annotations, and UI completion remain separate planned capabilities.
+The current source implements authenticated collection updates with expected revisions, member listing/addition/role changes/removal, and collection-item list/create/update/delete. Owner/editor/viewer authorization is enforced by application role checks and PostgreSQL row-level security. Collection and item edits use optimistic revision conflicts, and implemented membership/item mutations emit collection audit events.
+
+The web source can list/create collections and browse their items after authentication. Full membership management, item editing, collection reordering, annotations, share links, ownership transfer, and invitation acceptance UI remain incomplete.
+
+Human-friendly recipient discovery and invitation delivery are **blocked by prerequisite** until GoreeCloud Identity defines an approved cross-application directory/invitation contract. Maps must not use an administrative Identity-provider user-list API as an accidental consumer directory and must not create an unrelated Maps account directory.
 
 ## 5. Data architecture
 
@@ -82,6 +90,8 @@ Minimum entities:
 - audit records for security-sensitive sharing changes.
 
 Location history must not be copied into Maps merely for convenience. Maps stores only the minimum user-location-derived state required for map tasks, subject to Privacy Shield rules.
+
+The migration chain currently includes the multi-user/PostGIS foundation plus audit-event RLS hardening. CI must continue applying the complete ordered migration chain rather than testing only the first migration.
 
 ## 6. Provider architecture
 
@@ -114,6 +124,16 @@ Compatibility with an API shape does not authorize production use of an arbitrar
 
 Identity is the principal/authentication authority. Maps must not create an unrelated permanent account system.
 
+The browser source implements an optional OIDC public client using Authorization Code + PKCE (`S256`) without a client secret. OIDC issuer/client registration is configuration-driven and blank by default. The browser keeps the resulting bearer access token in memory; only transient PKCE verifier/state are placed in `sessionStorage`. Configured redirect URIs must remain on the current Maps origin, and configured Identity endpoints must use HTTPS outside local development.
+
+Protected Maps API routes expect a bearer **access token**. The current verifier checks the signed token against the configured issuer/client audience and standard expiry semantics, requires a subject, then asks the provider UserInfo endpoint to accept the same token and return the same subject. Maps resolves that subject to an internal user and independently performs resource authorization.
+
+The UserInfo confirmation is the current source contract for distinguishing a provider-recognized access token from the earlier ID-token-as-bearer assumption. It introduces a provider availability/latency dependency on protected requests and is not automatically the final production validation architecture.
+
+GoreeCloud Identity is not yet approved for GoreeCloud-wide production SSO. Maps still requires actual client registration and end-to-end evidence for login, callback, user mapping, token expiry, logout/session behavior, disabled accounts, Identity outage behavior, recovery, rollback, privacy, and security before production acceptance.
+
+See `docs/IDENTITY.md` for the detailed source boundary.
+
 ### GoreeCloud Location
 
 Maps requests current/approved location capabilities and optional sharing overlays from Location. Permission, precision, tracking, and history truth remain with Location/Privacy Shield.
@@ -142,13 +162,15 @@ User-owned saved places, collections, annotations, preferences, and other durabl
 
 The map itself is the primary Canvas. Persistent or contextual controls use Soft Glaze/Glaze; expanded menus and sheets use Deep Glaze; active navigation and other ongoing processes may use Live Glaze.
 
-Mobile composition uses a high-information map/viewing zone with primary reachable actions near the lower action zone. Search expands from its invoking control. Place cards and route details use connected sheet transformations rather than unrelated modal jumps.
+Mobile composition uses a high-information map/viewing zone with primary reachable actions near the lower action zone. Search expands from its invoking control. Place/search results, collections, route details, and status surfaces must use the same Glaze semantic variables and accessibility fallbacks as the rest of Maps rather than introducing a separate design authority.
 
 Desktop uses a denser sidebar/inspector model, keyboard shortcuts, pointer states, resizable panels, and contextual menus. Tablet/foldable layouts use split panes and hinge-aware placement. Reduced transparency/motion and effects-free modes must preserve complete usability.
 
-## 9. API principles
+## 9. Web/API integration principles
 
-All protected APIs are versioned under `/api/v1/` initially. APIs use stable resource identifiers, explicit pagination, structured errors, idempotency where retries are expected, optimistic concurrency or version fields for collaborative mutations, and server-side authorization.
+The initial browser client uses a same-origin API path, defaulting to `/api/v1`. `VITE_MAPS_API_BASE_PATH` must begin with `/` and must not be an external or scheme-relative origin. This preserves a controlled reverse-proxy boundary and avoids runtime browser configuration that can redirect private bearer/API traffic to arbitrary origins.
+
+All protected APIs are versioned under `/api/v1/` initially. APIs use stable resource identifiers, explicit pagination where needed, structured errors, idempotency where retries are expected, optimistic concurrency or version fields for collaborative mutations, and server-side authorization.
 
 Provider credentials and internal upstream endpoints must never be exposed to untrusted clients.
 
@@ -171,25 +193,29 @@ Current source routes include:
 - `POST /api/v1/routes`;
 - public `GET /api/v1/capabilities`, limited to configured/not-configured provider state.
 
-Collection and item updates require expected revisions and return conflict state when the caller is stale. Member roles are limited to editor/viewer because the owner is represented on the collection itself. Member addition currently accepts an existing Maps user ID; invitation delivery and a governed GoreeCloud Identity/directory resolution experience are not yet implemented.
+Collection and item updates require expected revisions and return conflict state when the caller is stale. Member roles are limited to editor/viewer because the owner is represented on the collection itself. Member addition currently accepts an existing Maps user ID; this is a controlled API primitive, not a completed invitation experience.
 
 The provider-dependent search/reverse/route routes require authenticated Maps users and return explicit unavailable state when the capability is not configured.
 
 ## 10. Security and privacy constraints
 
-Precise location is sensitive. Logs must avoid recording precise coordinates, route origins/destinations, search queries, tokens, or share secrets unless a specific operational requirement exists and the retention/privacy contract permits it.
+Precise location is sensitive. Logs must avoid recording precise coordinates, route origins/destinations, search queries, bearer tokens, OIDC codes, PKCE verifiers, share secrets, or private collection contents unless a specific operational requirement exists and the retention/privacy contract permits it.
 
 Public map tiles and user-private resources must use separate caching rules. Private responses must not become publicly cacheable through CDN configuration.
 
-The initial provider error path records only an operation class rather than raw query text, coordinates, route waypoints, upstream bodies, or provider URLs. Collaboration storage failures also log the operation class rather than collection contents, member payloads, item coordinates, or notes. Runtime observability must preserve this minimization contract.
+The initial provider error path records only an operation class rather than raw query text, coordinates, route waypoints, upstream bodies, or provider URLs. Collaboration storage failures also log the operation class rather than collection contents, member payloads, item coordinates, or notes. The browser source does not persist the bearer access token. Runtime observability must preserve this minimization contract.
+
+No browser client secret is permitted. Production deployment must separately validate CSP, reverse proxy behavior, CORS/header policy, token exposure surfaces, Identity redirect registrations, and network boundaries.
 
 ## 11. Availability and resilience
 
 The application should remain useful during partial outages. Cached map content, saved places, offline regions, and previously downloaded route/map resources should degrade independently from live provider services.
 
-The UI must distinguish unavailable, stale, offline, delayed, approximate, and unverified states instead of presenting all failures as empty results.
+The UI must distinguish unavailable, stale, offline, delayed, approximate, unauthenticated, Identity-unconfigured, and unverified states instead of presenting all failures as empty results.
 
-The provider API exposes configured/not-configured capability state so clients can distinguish a disabled provider from a valid empty result. No-provider operation remains an intentional supported development/degraded state.
+The provider API exposes configured/not-configured capability state so clients can distinguish a missing capability from a valid empty place/route result. No-provider operation remains an intentional supported development/degraded state.
+
+The current browser disconnect action removes its local in-memory token only and must not be represented as provider-wide SSO logout. Provider logout/session management remains a later acceptance scope.
 
 ## 12. Release acceptance
 
@@ -200,6 +226,7 @@ A Stable release requires, as applicable:
 - API authorization tests;
 - multi-user isolation tests;
 - database migration validation;
+- actual GoreeCloud Identity Maps client registration and end-to-end login/session acceptance;
 - accessibility and keyboard testing;
 - reduced motion/transparency and forced-colors testing;
 - responsive/form-factor testing;
@@ -216,10 +243,10 @@ A Stable release requires, as applicable:
 ## 13. Initial milestones
 
 1. Repository/product foundation and architecture contracts — source foundation established; review/merge remains gated.
-2. Web map shell with Glaze UI 2.0 semantics and replaceable map-style provider — initial shell established; rendered/provider acceptance pending.
-3. Identity-backed multi-user API and PostGIS schema for saved places/collections — schema, collection membership/item collaboration APIs, optimistic revision handling, audit events, and automated multi-user/RLS PostGIS acceptance are established; invitation/directory integration, production database, production Identity, UI, load, backup, and deployment acceptance remain pending.
-4. Place discovery/geocoding provider and Search interoperability — Nominatim-compatible source adapter/API established; approved provider deployment, web integration, quality acceptance, and GoreeCloud Search interoperability pending.
-5. Route planning provider and directions UI — Valhalla-compatible source adapter/API established; approved router deployment, directions UI, route-quality acceptance, and advanced planning controls pending.
+2. Web map shell with Glaze UI 2.0 semantics and replaceable map-style provider — initial shell and same-origin service surfaces established; rendered/live-provider acceptance pending.
+3. Identity-backed multi-user API and PostGIS schema for saved places/collections — schema, collaboration APIs, optimistic revision handling, audit events, PKCE browser source, access-token API verification boundary, and automated multi-user/RLS PostGIS acceptance are established; actual Identity client registration, recipient directory/invitations, production database/Identity, load, backup, and deployment acceptance remain pending.
+4. Place discovery/geocoding provider and Search interoperability — Nominatim-compatible source adapter/API and initial web results are established; approved provider deployment, quality acceptance, rich place data, and GoreeCloud Search interoperability remain pending.
+5. Route planning provider and directions UI — Valhalla-compatible source adapter/API and initial web route rendering/maneuver summary are established; approved router deployment, route-quality acceptance, alternatives, advanced planning controls, and navigation remain pending.
 6. Offline region/package system.
 7. Live navigation and Location integration.
 8. Traffic/incidents/transit expansion.
