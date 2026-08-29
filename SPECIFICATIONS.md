@@ -26,6 +26,8 @@ Required sharing scopes:
 
 Collaborative resources use explicit roles: `owner`, `editor`, and `viewer`. Authorization must be checked server-side for every protected read or mutation. Possession of an object identifier must never grant access.
 
+The current source authorization model has automated PostGIS integration coverage for owner/editor/viewer/stranger collection visibility, editor mutation, viewer mutation denial, membership authority, member self-removal, private saved-place isolation, immutable collection ownership, and refusal of a database-owner/`BYPASSRLS` runtime connection. This is source-level CI acceptance; production database, GoreeCloud Identity SSO, deployment, load, and recovery acceptance remain separate gates.
+
 ## 4. Core domains
 
 ### Map presentation
@@ -98,9 +100,9 @@ No provider may be assumed permanent. Provider-specific response types must be n
 
 The preferred baseline uses open/self-hostable components and GoreeCloud-controlled delivery. Any external service must be justified by coverage, quality, licensing, privacy, security, operational, and portability requirements.
 
-The first implemented server adapters are Nominatim-compatible forward/reverse geocoding and Valhalla-compatible routing. Their base URLs are optional server-side configuration and are blank by default. Configured URLs must be absolute HTTP(S) URLs without embedded credentials, query parameters, or fragments; Maps appends fixed provider action paths. The implementation bounds HTTP timeout, response size, search limits, waypoint counts, and coordinate/query validation.
+The first implemented server adapters are Nominatim-compatible forward/reverse geocoding and Valhalla-compatible routing. Their base URLs are optional server-side configuration and are blank by default. Configured URLs must be absolute HTTP(S) URLs without embedded credentials, query parameters, or fragments; Maps appends fixed provider action paths. The implementation bounds HTTP timeout, response size, search limits, waypoint counts, and coordinate/query validation, and refuses upstream HTTP redirects.
 
-This application-level URL validation is not a complete production SSRF defense. Production acceptance must add runtime egress restrictions and review DNS/redirect behavior, provider provenance/license terms, capacity/rate limits, secret handling where applicable, monitoring, Privacy Shield evidence, and Wardveil Security evidence.
+This application-level URL validation and redirect refusal are not a complete production SSRF defense. Production acceptance must add runtime egress restrictions and DNS-resolution controls, provider provenance/license terms, capacity/rate limits, secret handling where applicable, monitoring, Privacy Shield evidence, and Wardveil Security evidence.
 
 Compatibility with an API shape does not authorize production use of an arbitrary public Nominatim, Valhalla, or other provider instance.
 
@@ -202,7 +204,7 @@ A Stable release requires, as applicable:
 
 1. Repository/product foundation and architecture contracts — source foundation established; review/merge remains gated.
 2. Web map shell with Glaze UI 2.0 semantics and replaceable map-style provider — initial shell established; rendered/provider acceptance pending.
-3. Identity-backed multi-user API and PostGIS schema for saved places/collections — initial schema and collection primitives established; two-user runtime acceptance pending.
+3. Identity-backed multi-user API and PostGIS schema for saved places/collections — schema and collection primitives established; automated multi-user/RLS PostGIS acceptance passes in CI, while production database and Identity acceptance remain pending.
 4. Place discovery/geocoding provider and Search interoperability — Nominatim-compatible source adapter/API established; approved provider deployment, web integration, quality acceptance, and GoreeCloud Search interoperability pending.
 5. Route planning provider and directions UI — Valhalla-compatible source adapter/API established; approved router deployment, directions UI, route-quality acceptance, and advanced planning controls pending.
 6. Offline region/package system.
