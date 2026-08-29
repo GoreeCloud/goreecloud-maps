@@ -31,6 +31,19 @@ Status vocabulary: **Implemented**, **In progress**, **Planned**, or **Blocked b
 
 The current renderer shell is functional but uses a local data-empty style unless an approved `VITE_MAP_STYLE_URL` is configured. It therefore does not yet claim live geographic map coverage.
 
+## Geographic data plane
+
+| Feature | Status | Notes |
+|---|---|---|
+| Versioned map-data release contract | In progress | Repository schema and CI validator define immutable release IDs, style/tile paths, zoom/bounds, attribution, provenance, and public-data-only requirements. |
+| Read-only Cloudflare Worker/R2 gateway | In progress | Source allowlists current manifest plus versioned style/tile/sprite/glyph objects and has no write/list/private-data surface; actual Worker/R2 deployment remains pending. |
+| Immutable release caching | In progress | Source response contract gives versioned release objects long immutable cache semantics while the current manifest is short-lived; runtime cache acceptance remains pending. |
+| Vector-tile publication pipeline | Planned | No approved dataset ingestion/tile generation pipeline exists yet. |
+| Approved production basemap release | Blocked by prerequisite | Requires dataset license/provenance, rendering quality, operational, Privacy Shield, Wardveil, and deployment acceptance. |
+| Cloudflare Pages application deployment | Planned | Pages build/header contract is documented, but no Maps Pages deployment is claimed. |
+
+The public geographic-data plane is deliberately separate from private Maps state. Tiles, styles, glyphs, sprites, attribution, and public release metadata may use the public delivery path; saved places, collections, route/search history, Identity state, and precise personal location must not enter that public bundle.
+
 ## Search, places, and discovery
 
 | Feature | Status |
@@ -139,8 +152,8 @@ The source integration expects OAuth/OIDC bearer access tokens rather than using
 
 | Feature | Status |
 |---|---|
-| Open map data ingestion | Planned |
-| Source attribution and provenance | Planned |
+| Open map data ingestion | In progress |
+| Source attribution and provenance | In progress |
 | User-submitted place feedback | Planned |
 | Road closure/hazard reports | Planned |
 | Community incident reports | Planned |
@@ -150,6 +163,8 @@ The source integration expects OAuth/OIDC bearer access tokens rather than using
 | Indoor map datasets | Planned |
 | Street-level imagery provider | Blocked by prerequisite |
 | Satellite/aerial imagery provider | Blocked by prerequisite |
+
+The repository now defines how an accepted public map-data release must record attribution and source provenance, but it does not yet ingest or publish an approved dataset. The synthetic manifest fixture exists only to validate the release contract.
 
 ## GoreeCloud platform integration
 
