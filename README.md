@@ -47,6 +47,8 @@ Maps is designed for individual users, households, teams, and shared collections
 
 Core collaborative resources include saved places, collections/lists, shared maps, route plans, annotations, contributed edits, and optional ETA/location overlays delegated to GoreeCloud Location. Roles are modeled explicitly rather than inferred from possession of a URL.
 
+The current source implements owner/editor/viewer authorization, PostGIS row-level security, collection updates with optimistic revision checks, member list/add/role-change/removal APIs, collection-item list/create/update/delete APIs, and collaboration audit events. Automated CI exercises these paths against a live PostGIS service with owner/editor/viewer/stranger principals. Invitation delivery, governed identity-directory resolution, share links, ownership transfer, collaboration UI, and production Identity/database acceptance remain pending.
+
 ## Experience direction
 
 The experience is heavily inspired by the useful interaction patterns users expect from leading map products while remaining visually and technically original to GoreeCloud. The roadmap includes:
