@@ -26,7 +26,7 @@ Required sharing scopes:
 
 Collaborative resources use explicit roles: `owner`, `editor`, and `viewer`. Authorization must be checked server-side for every protected read or mutation. Possession of an object identifier must never grant access.
 
-The current source authorization model has automated PostGIS integration coverage for owner/editor/viewer/stranger collection visibility, editor mutation, viewer mutation denial, membership authority, member self-removal, private saved-place isolation, immutable collection ownership, and refusal of a database-owner/`BYPASSRLS` runtime connection. This is source-level CI acceptance; production database, GoreeCloud Identity SSO, deployment, load, and recovery acceptance remain separate gates.
+The current source authorization model has automated PostGIS integration coverage for owner/editor/viewer/stranger collection visibility, collection revision conflicts, editor item creation/update/deletion, viewer mutation denial, owner-only membership administration, role changes, member self-removal, private saved-place isolation, collaboration audit records, immutable collection ownership, and refusal of a database-owner/`BYPASSRLS` runtime connection. This is source-level CI acceptance; production database, GoreeCloud Identity SSO, deployment, load, backup, and recovery acceptance remain separate gates.
 
 ## 4. Core domains
 
@@ -59,6 +59,8 @@ Users must be able to select or download versioned regional map packages. Offlin
 ### Collaboration
 
 Users must be able to create collections and shared maps, add places, annotate entries, reorder content, invite/remove members, alter member roles, and revoke sharing. Conflict handling must be deterministic and auditable.
+
+The current source implements authenticated collection updates with expected revisions, member listing/addition/role changes/removal, and collection-item list/create/update/delete. Owner/editor/viewer authorization is enforced by application role checks and PostgreSQL row-level security. Collection and item edits use optimistic revision conflicts, and implemented membership/item mutations emit collection audit events. Invitation delivery, identity-directory resolution, share-link workflows, ownership transfer, collaborative annotations, and UI completion remain separate planned capabilities.
 
 ## 5. Data architecture
 
@@ -155,10 +157,21 @@ Current source routes include:
 - `GET /api/v1/me`;
 - `GET /api/v1/collections`;
 - `POST /api/v1/collections`;
+- `PATCH /api/v1/collections/{collectionID}`;
+- `GET /api/v1/collections/{collectionID}/members`;
+- `POST /api/v1/collections/{collectionID}/members`;
+- `PATCH /api/v1/collections/{collectionID}/members/{memberUserID}`;
+- `DELETE /api/v1/collections/{collectionID}/members/{memberUserID}`;
+- `GET /api/v1/collections/{collectionID}/items`;
+- `POST /api/v1/collections/{collectionID}/items`;
+- `PATCH /api/v1/collections/{collectionID}/items/{itemID}`;
+- `DELETE /api/v1/collections/{collectionID}/items/{itemID}` with a positive `expectedRevision` query parameter;
 - `GET /api/v1/search`;
 - `GET /api/v1/reverse`;
 - `POST /api/v1/routes`;
 - public `GET /api/v1/capabilities`, limited to configured/not-configured provider state.
+
+Collection and item updates require expected revisions and return conflict state when the caller is stale. Member roles are limited to editor/viewer because the owner is represented on the collection itself. Member addition currently accepts an existing Maps user ID; invitation delivery and a governed GoreeCloud Identity/directory resolution experience are not yet implemented.
 
 The provider-dependent search/reverse/route routes require authenticated Maps users and return explicit unavailable state when the capability is not configured.
 
@@ -168,7 +181,7 @@ Precise location is sensitive. Logs must avoid recording precise coordinates, ro
 
 Public map tiles and user-private resources must use separate caching rules. Private responses must not become publicly cacheable through CDN configuration.
 
-The initial provider error path records only an operation class rather than raw query text, coordinates, route waypoints, upstream bodies, or provider URLs. Runtime observability must preserve this minimization contract.
+The initial provider error path records only an operation class rather than raw query text, coordinates, route waypoints, upstream bodies, or provider URLs. Collaboration storage failures also log the operation class rather than collection contents, member payloads, item coordinates, or notes. Runtime observability must preserve this minimization contract.
 
 ## 11. Availability and resilience
 
@@ -204,7 +217,7 @@ A Stable release requires, as applicable:
 
 1. Repository/product foundation and architecture contracts — source foundation established; review/merge remains gated.
 2. Web map shell with Glaze UI 2.0 semantics and replaceable map-style provider — initial shell established; rendered/provider acceptance pending.
-3. Identity-backed multi-user API and PostGIS schema for saved places/collections — schema and collection primitives established; automated multi-user/RLS PostGIS acceptance passes in CI, while production database and Identity acceptance remain pending.
+3. Identity-backed multi-user API and PostGIS schema for saved places/collections — schema, collection membership/item collaboration APIs, optimistic revision handling, audit events, and automated multi-user/RLS PostGIS acceptance are established; invitation/directory integration, production database, production Identity, UI, load, backup, and deployment acceptance remain pending.
 4. Place discovery/geocoding provider and Search interoperability — Nominatim-compatible source adapter/API established; approved provider deployment, web integration, quality acceptance, and GoreeCloud Search interoperability pending.
 5. Route planning provider and directions UI — Valhalla-compatible source adapter/API established; approved router deployment, directions UI, route-quality acceptance, and advanced planning controls pending.
 6. Offline region/package system.
