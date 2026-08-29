@@ -276,7 +276,7 @@ const applyConfiguredMapData = async (): Promise<void> => {
     }
     mapDataState = { mode: 'release', releaseId: release.manifest.releaseId };
     const apply = (): void => {
-      map.setStyle(release.styleURL);
+      map.setStyle(release.style);
       const [west, south, east, north] = release.manifest.bounds;
       const globalCoverage = west <= -179.9 && east >= 179.9 && south <= -84 && north >= 84;
       if (!globalCoverage) {
