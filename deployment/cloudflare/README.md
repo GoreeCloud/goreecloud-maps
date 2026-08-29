@@ -21,6 +21,8 @@ Intended Pages build settings:
 
 Pages deployment must not inject a browser client secret. Any GoreeCloud Identity browser integration remains an OIDC public-client registration using Authorization Code + PKCE.
 
+The preferred map-data browser configuration is `VITE_MAP_DATA_MANIFEST_URL`. It must identify the accepted public release-manifest endpoint and must use HTTPS outside localhost development. `VITE_MAP_STYLE_URL` remains the manual style seam only when no manifest endpoint is configured. These values are deployment configuration, not evidence that a live endpoint is approved merely because the environment variable can be set.
+
 ## Public geographic data — Worker + R2
 
 Large versioned geographic assets are kept separate from the application shell.
@@ -40,6 +42,22 @@ The Worker does not implement write operations, R2 bucket listing, arbitrary obj
 
 The checked-in Wrangler configuration names intended R2 resources. Those names are desired deployment resources only; their presence in source does not prove provisioning.
 
+## Client-side release validation
+
+When a manifest endpoint is configured, the web client does not hand an untrusted release style URL directly to MapLibre. It first loads the repository-local empty style, then:
+
+1. fetches the current manifest without credentials and refuses redirects;
+2. validates schema version, release ID/path consistency, bounds/zoom, attribution, source provenance, and the public-geographic-data-only marker;
+3. fetches the immutable `style.json` and applies the schema-v1 vector/MVT style contract;
+4. rejects style imports, TileJSON indirection, external font-face resources, non-vector source types, off-release tile URLs, and off-release glyph/sprite resources;
+5. normalizes allowed release resources to the configured release origin;
+6. injects validated manifest attribution into the rendered vector source;
+7. supplies the validated in-memory style to MapLibre.
+
+A failed manifest/style check leaves the app on the local empty map. It must not silently fall through to a public third-party basemap.
+
+Schema v1 is intentionally limited to vector/MVT releases. Raster/aerial imagery, terrain, archive formats such as PMTiles, and other source classes require a later reviewed schema and deployment contract.
+
 ## Cache contract
 
 The delivery model uses two cache classes:
@@ -51,7 +69,7 @@ A rollback changes the current manifest pointer to a previously accepted release
 
 ## Geographic release publication
 
-Before publication, a release must pass the repository manifest validator plus separate operational acceptance for:
+Before publication, a release must pass the repository manifest and style validators plus separate operational acceptance for:
 
 - data licensing and redistribution terms;
 - required attribution text/link behavior;
@@ -62,10 +80,11 @@ Before publication, a release must pass the repository manifest validator plus s
 - accessibility considerations;
 - abuse/rate/capacity controls;
 - cache and rollback behavior;
+- CORS/origin policy appropriate to the actual production application origins;
 - public/private-data separation;
 - Privacy Shield and Wardveil Security evidence.
 
-The current repository contains only a synthetic validation fixture. It does not contain an approved map dataset.
+The current repository contains only synthetic validation fixtures. It does not contain an approved map dataset.
 
 ## Same-origin API boundary
 
@@ -83,8 +102,9 @@ When the connected Cloudflare control plane is used for Maps, record at minimum:
 - routes/custom domains actually configured;
 - environment variables and secret *names* without recording reusable secret values;
 - deployment/preview status;
-- cache/header checks;
-- rollback test;
+- map-data manifest/style endpoint and release ID actually served;
+- cache/header and CORS checks;
+- rollback test against a previously accepted immutable release;
 - production smoke test;
 - any Cloudflare security or observability controls relied upon.
 
