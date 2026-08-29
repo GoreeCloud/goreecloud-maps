@@ -33,15 +33,28 @@ The product is designed around replaceable capabilities rather than proprietary 
 - **Routing:** provider interface with a Valhalla-compatible server adapter implemented as the initial self-hostable baseline.
 - **Geocoding/search:** GoreeCloud-owned provider interface with a Nominatim-compatible forward/reverse adapter implemented, plus planned GoreeCloud Search interoperability.
 - **Map data:** open, license-compliant sources such as OpenStreetMap and other approved datasets, processed and served through GoreeCloud-controlled infrastructure.
-- **Tiles/packages:** vector-tile and offline-package pipelines designed for self-hosting, caching, versioning, rollback, and regional downloads.
+- **Tiles/packages:** versioned public vector-tile/style releases plus future offline-package pipelines designed for self-hosting, caching, rollback, and regional downloads.
 - **Identity:** GoreeCloud Identity is the authentication and principal authority; the web source implements optional Authorization Code + PKCE as a public client and the API expects provider-recognized bearer access tokens.
 - **Location:** GoreeCloud Location supplies approved device/user location capabilities.
 
 Provider adapters are mandatory so routing, geocoding, traffic, transit, imagery, and tile delivery can evolve without rewriting the application. The implemented geocoding and routing adapters are configuration-driven and have no provider endpoint enabled by default; they are source foundations, not evidence of live provider coverage or production acceptance.
 
-The web client now has source-level same-origin `/api/v1` integration for provider capability status, authenticated place search, provider-backed directions, shared collection listing/creation, and collection-item browsing. Search results can move the map to a returned place, and route results can render returned Valhalla geometry and maneuver summaries. These experiences remain unavailable when the required Maps API, Identity registration, geocoder, or router is not configured; no public provider is silently substituted.
+The web client has source-level same-origin `/api/v1` integration for provider capability status, authenticated place search, provider-backed directions, shared collection listing/creation, and collection-item browsing. Search results can move the map to a returned place, and route results can render returned Valhalla geometry and maneuver summaries. These experiences remain unavailable when the required Maps API, Identity registration, geocoder, or router is not configured; no public provider is silently substituted.
 
-See [docs/PROVIDERS.md](docs/PROVIDERS.md) for the provider contract and [docs/IDENTITY.md](docs/IDENTITY.md) for the current Identity/access-token/invitation boundary.
+## Public geographic data plane
+
+The repository now defines a separate public map-data delivery boundary under `mapdata/` and `services/mapdata-edge`.
+
+- versioned release manifests record release ID, coverage, zoom range, attribution, source dataset versions, licensing/provenance, style path, and tile template;
+- immutable objects live beneath `releases/<release-id>/` and must never be replaced in place after publication;
+- `manifests/current.json` is the only mutable release pointer and is intentionally short-cached;
+- the Cloudflare Worker/R2 source gateway is read-only and allowlists only current/release manifests, styles, vector tiles, sprites, and glyphs;
+- the Worker exposes no bucket listing, write surface, private Maps API, Identity state, saved data, searches, routes, collections, or personal location data;
+- CI validates the release-manifest fixture and performs a Wrangler dry bundle of the edge service.
+
+This is a source/deployment contract only. The repository does not contain an approved basemap dataset and does not prove that the intended R2 buckets, Worker, Pages project, routes, or custom domains have been provisioned. Production publication still requires dataset licensing/provenance, attribution, rendering quality, cache/rollback, Privacy Shield, Wardveil Security, and Cloudflare runtime acceptance.
+
+See [mapdata/README.md](mapdata/README.md), [deployment/cloudflare/README.md](deployment/cloudflare/README.md), [docs/PROVIDERS.md](docs/PROVIDERS.md), and [docs/IDENTITY.md](docs/IDENTITY.md).
 
 ## Multi-user model
 
@@ -81,6 +94,8 @@ The experience is heavily inspired by the useful interaction patterns users expe
 - [FEATURES.md](FEATURES.md) — feature inventory with implementation status.
 - [BENEFITS.md](BENEFITS.md) — user, administrator, privacy, and platform benefits.
 - [COMPETITIVE-OBJECTIVES.md](COMPETITIVE-OBJECTIVES.md) — competitive capability targets and differentiation.
+- [mapdata/README.md](mapdata/README.md) — public geographic-data release and publication contract.
+- [deployment/cloudflare/README.md](deployment/cloudflare/README.md) — intended Pages + Worker/R2 deployment boundary and evidence requirements.
 - [docs/PROVIDERS.md](docs/PROVIDERS.md) — provider API contracts, configuration, privacy/security controls, and acceptance gates.
 - [docs/IDENTITY.md](docs/IDENTITY.md) — browser OIDC/PKCE, API access-token validation, and invitation-directory boundary.
 - `docs/` — architecture, provider, Glaze UI, privacy/security, and integration records as implementation progresses.
