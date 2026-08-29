@@ -108,6 +108,9 @@ AS $$
     SELECT NULLIF(current_setting('goreecloud.maps_user_id', true), '')::uuid
 $$;
 
+-- The application runtime must connect with a non-owner role that does not have BYPASSRLS.
+-- This SECURITY DEFINER helper is intentionally owned by the migration/table owner so it can
+-- evaluate membership without recursively applying the collection-member policies.
 CREATE OR REPLACE FUNCTION maps.collection_access_role(target_collection_id uuid)
 RETURNS text
 LANGUAGE sql
@@ -145,17 +148,11 @@ FOR EACH ROW
 EXECUTE FUNCTION maps.prevent_collection_owner_change();
 
 ALTER TABLE maps.preferences ENABLE ROW LEVEL SECURITY;
-ALTER TABLE maps.preferences FORCE ROW LEVEL SECURITY;
 ALTER TABLE maps.saved_places ENABLE ROW LEVEL SECURITY;
-ALTER TABLE maps.saved_places FORCE ROW LEVEL SECURITY;
 ALTER TABLE maps.collections ENABLE ROW LEVEL SECURITY;
-ALTER TABLE maps.collections FORCE ROW LEVEL SECURITY;
 ALTER TABLE maps.collection_members ENABLE ROW LEVEL SECURITY;
-ALTER TABLE maps.collection_members FORCE ROW LEVEL SECURITY;
 ALTER TABLE maps.collection_items ENABLE ROW LEVEL SECURITY;
-ALTER TABLE maps.collection_items FORCE ROW LEVEL SECURITY;
 ALTER TABLE maps.audit_events ENABLE ROW LEVEL SECURITY;
-ALTER TABLE maps.audit_events FORCE ROW LEVEL SECURITY;
 
 CREATE POLICY preferences_owner_all
 ON maps.preferences
