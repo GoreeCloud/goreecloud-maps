@@ -55,7 +55,13 @@ func main() {
 		os.Exit(1)
 	}
 
-	handler := httpapi.New(logger, dataStore, verifier, providerSet)
+	baseHandler := httpapi.New(logger, dataStore, verifier, providerSet)
+	savedPlacesHandler := httpapi.NewSavedPlaces(logger, dataStore, verifier)
+	handler := http.NewServeMux()
+	handler.Handle("/api/v1/saved-places", savedPlacesHandler)
+	handler.Handle("/api/v1/saved-places/", savedPlacesHandler)
+	handler.Handle("/", baseHandler)
+
 	server := &http.Server{
 		Addr:              listenAddress,
 		Handler:           handler,
