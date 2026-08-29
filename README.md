@@ -32,8 +32,8 @@ The product is designed around replaceable capabilities rather than proprietary 
 - **Spatial database:** PostgreSQL + PostGIS.
 - **Routing:** provider interface with a Valhalla-compatible server adapter implemented as the initial self-hostable baseline.
 - **Geocoding/search:** GoreeCloud-owned provider interface with a Nominatim-compatible forward/reverse adapter implemented, plus planned GoreeCloud Search interoperability.
-- **Map data:** open, license-compliant sources such as OpenStreetMap and other approved datasets, processed and served through GoreeCloud-controlled infrastructure.
-- **Tiles/packages:** versioned public vector-tile/style releases plus future offline-package pipelines designed for self-hosting, caching, rollback, and regional downloads.
+- **Map data:** open, license-compliant sources such as OpenStreetMap and other approved datasets, processed into versioned public releases and served through GoreeCloud-controlled infrastructure.
+- **Tiles/packages:** schema-v1 public releases use vector/MVT ZXY tiles with immutable style/tile/glyph/sprite resources; future offline/archive/imagery schemas remain separate work.
 - **Identity:** GoreeCloud Identity is the authentication and principal authority; the web source implements optional Authorization Code + PKCE as a public client and the API expects provider-recognized bearer access tokens.
 - **Location:** GoreeCloud Location supplies approved device/user location capabilities.
 
@@ -43,16 +43,21 @@ The web client has source-level same-origin `/api/v1` integration for provider c
 
 ## Public geographic data plane
 
-The repository now defines a separate public map-data delivery boundary under `mapdata/` and `services/mapdata-edge`.
+The repository defines a separate public map-data delivery boundary under `mapdata/` and `services/mapdata-edge`.
 
 - versioned release manifests record release ID, coverage, zoom range, attribution, source dataset versions, licensing/provenance, style path, and tile template;
 - immutable objects live beneath `releases/<release-id>/` and must never be replaced in place after publication;
 - `manifests/current.json` is the only mutable release pointer and is intentionally short-cached;
 - the Cloudflare Worker/R2 source gateway is read-only and allowlists only current/release manifests, styles, vector tiles, sprites, and glyphs;
 - the Worker exposes no bucket listing, write surface, private Maps API, Identity state, saved data, searches, routes, collections, or personal location data;
-- CI validates the release-manifest fixture and performs a Wrangler dry bundle of the edge service.
+- CI validates both synthetic release-manifest and MapLibre style fixtures and performs a Wrangler dry bundle of the edge service;
+- schema v1 permits only vector/MVT release-local source resources and rejects imported styles, TileJSON indirection, external font-face resources, and off-release tile/glyph/sprite resources;
+- the browser can use `VITE_MAP_DATA_MANIFEST_URL` to resolve the current release without rebuilding the application shell. It starts on the local empty style, validates the manifest and immutable style, normalizes allowed release resources, injects validated manifest attribution, then supplies the resulting in-memory style to MapLibre;
+- a rejected/unavailable release keeps the privacy-safe local fallback instead of silently falling through to an unrelated public style.
 
-This is a source/deployment contract only. The repository does not contain an approved basemap dataset and does not prove that the intended R2 buckets, Worker, Pages project, routes, or custom domains have been provisioned. Production publication still requires dataset licensing/provenance, attribution, rendering quality, cache/rollback, Privacy Shield, Wardveil Security, and Cloudflare runtime acceptance.
+`VITE_MAP_STYLE_URL` remains a manual/legacy approved-style seam when no manifest endpoint is configured.
+
+This is a source/deployment contract only. The repository does not contain an approved basemap dataset and does not prove that the intended R2 buckets, Worker, Pages project, routes, or custom domains have been provisioned. Raster/satellite imagery, terrain, PMTiles/other archive formats, and additional source classes require future reviewed schemas. Production publication still requires dataset licensing/provenance, attribution, rendering quality, cache/rollback, CORS/origin policy, Privacy Shield, Wardveil Security, and Cloudflare runtime acceptance.
 
 See [mapdata/README.md](mapdata/README.md), [deployment/cloudflare/README.md](deployment/cloudflare/README.md), [docs/PROVIDERS.md](docs/PROVIDERS.md), and [docs/IDENTITY.md](docs/IDENTITY.md).
 
