@@ -8,7 +8,7 @@ Status vocabulary: **Implemented**, **In progress**, **Planned**, or **Blocked b
 |---|---|---|
 | Original GoreeCloud application model | Implemented | Repository and architecture prohibit a complete third-party application fork. |
 | Glaze UI 2.0.0 target | In progress | Web shell applies the current material/layout/accessibility contract; product-specific rendered acceptance remains required. |
-| Replaceable geospatial providers | In progress | Map-style seam plus Nominatim-compatible geocoding and Valhalla-compatible routing adapters are implemented; live provider deployment and acceptance remain pending. |
+| Replaceable geospatial providers | In progress | Map-data/style seams plus Nominatim-compatible geocoding and Valhalla-compatible routing adapters are implemented; live provider deployment and acceptance remain pending. |
 | Multi-user tenancy model | In progress | Identity-subject mapping, owner/member roles, RLS policies, collaboration APIs, runtime-role fail-closed checks, and automated PostGIS isolation acceptance are implemented; production Identity/database and broader UI acceptance remain pending. |
 | Browser OIDC public-client integration | In progress | Authorization Code + PKCE source integration exists with no browser secret and in-memory bearer token handling; actual Maps client registration and end-to-end Identity acceptance remain pending. |
 | Same-origin Maps API web client | In progress | Browser source calls a configurable same-origin API path and rejects arbitrary external API origins; deployment/proxy acceptance remains pending. |
@@ -29,20 +29,23 @@ Status vocabulary: **Implemented**, **In progress**, **Planned**, or **Blocked b
 | Map style switching | Planned |
 | Accessible non-map/list alternatives | Planned |
 
-The current renderer shell is functional but uses a local data-empty style unless an approved `VITE_MAP_STYLE_URL` is configured. It therefore does not yet claim live geographic map coverage.
+The renderer remains usable with a repository-local data-empty style. When `VITE_MAP_DATA_MANIFEST_URL` is configured, the web client starts on that local fallback, validates the configured public release manifest and immutable release style, and only then loads the normalized in-memory style. `VITE_MAP_STYLE_URL` remains the manual/legacy style seam when no manifest is configured. No approved live release is deployed, so Maps still does not claim geographic coverage.
 
 ## Geographic data plane
 
 | Feature | Status | Notes |
 |---|---|---|
 | Versioned map-data release contract | In progress | Repository schema and CI validator define immutable release IDs, style/tile paths, zoom/bounds, attribution, provenance, and public-data-only requirements. |
+| Schema-v1 MapLibre style contract | In progress | Producer validator and browser validation restrict v1 to vector/MVT release-local resources and reject imports, TileJSON indirection, external font-face resources, and off-release tile/glyph/sprite URLs. |
+| Web current-release resolver | In progress | Browser can resolve the mutable manifest pointer, validate manifest/style, inject validated attribution, normalize immutable release resources, and retain the local fallback on rejection. Runtime/live-release acceptance remains pending. |
 | Read-only Cloudflare Worker/R2 gateway | In progress | Source allowlists current manifest plus versioned style/tile/sprite/glyph objects and has no write/list/private-data surface; actual Worker/R2 deployment remains pending. |
 | Immutable release caching | In progress | Source response contract gives versioned release objects long immutable cache semantics while the current manifest is short-lived; runtime cache acceptance remains pending. |
 | Vector-tile publication pipeline | Planned | No approved dataset ingestion/tile generation pipeline exists yet. |
+| Raster/aerial/terrain/archive release schemas | Planned | Schema v1 is intentionally vector/MVT-only; imagery, terrain, PMTiles/other archive formats, and additional source types require future reviewed contracts. |
 | Approved production basemap release | Blocked by prerequisite | Requires dataset license/provenance, rendering quality, operational, Privacy Shield, Wardveil, and deployment acceptance. |
 | Cloudflare Pages application deployment | Planned | Pages build/header contract is documented, but no Maps Pages deployment is claimed. |
 
-The public geographic-data plane is deliberately separate from private Maps state. Tiles, styles, glyphs, sprites, attribution, and public release metadata may use the public delivery path; saved places, collections, route/search history, Identity state, and precise personal location must not enter that public bundle.
+The public geographic-data plane is deliberately separate from private Maps state. Tiles, styles, glyphs, sprites, attribution, and public release metadata may use the public delivery path; saved places, collections, route/search history, Identity state, and precise personal location must not enter that public bundle. The checked-in manifest/style fixtures are synthetic validation data only.
 
 ## Search, places, and discovery
 
@@ -143,10 +146,12 @@ The source integration expects OAuth/OIDC bearer access tokens rather than using
 | Downloadable map regions | Planned |
 | Offline place index | Planned |
 | Offline routing graphs | Planned |
-| Package integrity/version metadata | Planned |
+| Package integrity/version metadata | In progress |
 | Background package updates | Planned |
 | Storage quotas and cleanup | Planned |
 | Stale/offline/degraded state presentation | In progress |
+
+The map-data manifest establishes release identity, generation time, source/provenance, coverage, and immutable resource paths that can support later package integrity/freshness workflows, but no downloadable/offline region implementation exists yet.
 
 ## Data and community
 
@@ -164,7 +169,7 @@ The source integration expects OAuth/OIDC bearer access tokens rather than using
 | Street-level imagery provider | Blocked by prerequisite |
 | Satellite/aerial imagery provider | Blocked by prerequisite |
 
-The repository now defines how an accepted public map-data release must record attribution and source provenance, but it does not yet ingest or publish an approved dataset. The synthetic manifest fixture exists only to validate the release contract.
+The repository defines how an accepted public map-data release must record attribution and source provenance, but it does not yet ingest or publish an approved dataset. The synthetic manifest/style fixtures exist only to validate the release contract.
 
 ## GoreeCloud platform integration
 
