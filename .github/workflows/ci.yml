@@ -58,8 +58,13 @@ jobs:
           go-version-file: services/api/go.mod
           cache: false
 
-      - name: Download modules
-        run: go mod download
+      - name: Normalize module metadata
+        run: |
+          go mod tidy
+          test -s go.sum
+          printf '%s\n' '--- BEGIN GENERATED GO.SUM ---'
+          cat go.sum
+          printf '%s\n' '--- END GENERATED GO.SUM ---'
 
       - name: Verify formatting
         run: |
