@@ -12,6 +12,7 @@ import (
 
 	"github.com/GoreeCloud/goreecloud-maps/services/api/internal/auth"
 	"github.com/GoreeCloud/goreecloud-maps/services/api/internal/httpapi"
+	"github.com/GoreeCloud/goreecloud-maps/services/api/internal/providers"
 	"github.com/GoreeCloud/goreecloud-maps/services/api/internal/store"
 )
 
@@ -31,6 +32,16 @@ func main() {
 		os.Exit(2)
 	}
 
+	providerSet, err := providers.NewSet(
+		os.Getenv("MAPS_GEOCODER_BASE_URL"),
+		os.Getenv("MAPS_ROUTER_BASE_URL"),
+		os.Getenv("MAPS_PROVIDER_CLIENT_ID"),
+	)
+	if err != nil {
+		logger.Error("map provider configuration is invalid", "error", err)
+		os.Exit(2)
+	}
+
 	dataStore, err := store.Open(ctx, databaseURL)
 	if err != nil {
 		logger.Error("database initialization failed", "error", err)
@@ -44,7 +55,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	handler := httpapi.New(logger, dataStore, verifier)
+	handler := httpapi.New(logger, dataStore, verifier, providerSet)
 	server := &http.Server{
 		Addr:              listenAddress,
 		Handler:           handler,
@@ -66,7 +77,12 @@ func main() {
 		}
 	}()
 
-	logger.Info("GoreeCloud Maps API starting", "address", listenAddress)
+	capabilities := providerSet.Capabilities()
+	logger.Info("GoreeCloud Maps API starting",
+		"address", listenAddress,
+		"geocoding_configured", capabilities.Geocoding,
+		"routing_configured", capabilities.Routing,
+	)
 	if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 		logger.Error("HTTP server stopped unexpectedly", "error", err)
 		os.Exit(1)
