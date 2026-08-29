@@ -38,6 +38,26 @@ A production release manifest must identify:
 
 The manifest does not authorize a dataset merely because it is syntactically valid. Licensing, attribution, privacy, provenance, update cadence, geographic quality, accessibility, operational capacity, and Wardveil/Privacy Shield acceptance remain separate gates.
 
+## Style contract — schema v1
+
+`mapdata/examples/style.example.json` is a synthetic style fixture and `scripts/validate-mapdata-style.mjs` enforces the initial style boundary in CI.
+
+Map-data schema v1 is intentionally narrow:
+
+- MapLibre Style Specification version 8;
+- vector/MVT sources only;
+- release-local `tiles/{z}/{x}/{y}.pbf` tile templates only;
+- no TileJSON indirection;
+- no imported styles;
+- no external `font-faces` resources;
+- optional glyphs must use the release-local `glyphs/{fontstack}/{range}.pbf` path;
+- optional sprite resources must remain inside the immutable release path;
+- non-background vector layers must reference a declared source and source-layer.
+
+The web client independently validates this boundary before rendering a release. It fetches the manifest and style itself, bounds their sizes, refuses redirects, validates provenance/public-data state, converts release-local tile/glyph/sprite resources to the configured release origin, rejects off-origin/off-release resources, and injects the manifest’s validated attribution into the rendered vector source.
+
+Raster/satellite imagery, terrain sources, external style imports, remote font-face resources, PMTiles/other archive packaging, and other future source types require an explicit later schema version and their own privacy, licensing, performance, offline, and operational acceptance. They are not silently accepted by schema v1.
+
 ## Release generation boundary
 
 A future ingestion/build pipeline may use OpenStreetMap and other approved datasets, but it must not place raw provider secrets, personal user data, private route/search records, or unapproved proprietary content into the public release bundle.
@@ -58,10 +78,12 @@ No release is considered published merely because files exist in a repository or
 
 `services/mapdata-edge` is the initial read-only Cloudflare Worker/R2 delivery implementation. It exposes only the current manifest and allowlisted immutable release object shapes. It does not provide object writes, bucket listing, arbitrary key access, or private-user data access.
 
-The Worker configuration names the intended R2 resources for deployment, but this source repository does not prove those buckets or a Worker deployment currently exist. Cloudflare provisioning, custom-domain routing, cache behavior, observability, rollback, and production acceptance must be recorded separately when actually performed.
+The Worker configuration names the intended R2 resources for deployment, but this source repository does not prove those buckets or a Worker deployment currently exist. Cloudflare provisioning, custom-domain routing, cache behavior, observability, rollback, production CORS policy, and production acceptance must be recorded separately when actually performed.
 
 ## Client integration
 
-The current web client can consume an approved MapLibre-compatible style through `VITE_MAP_STYLE_URL`. A future client milestone may resolve the active style from the release manifest so roll-forward/rollback can occur without rebuilding the application shell.
+The preferred web configuration is `VITE_MAP_DATA_MANIFEST_URL`. When configured, Maps starts with the repository-local empty style, retrieves and validates the public release manifest and release style, and only then replaces the renderer style with the validated in-memory MapLibre style. This allows a mutable current-manifest pointer to roll forward or back without rebuilding the application shell while immutable release objects remain cacheable.
 
-Until an approved release is deployed, the repository-local empty style remains the privacy-safe default.
+`VITE_MAP_STYLE_URL` remains a manual/legacy approved-style seam and is used only when the manifest setting is empty. A configured release-manifest failure does not fall through to an unrelated style: Maps keeps the privacy-safe local empty style and exposes a degraded/unavailable state.
+
+Until an approved release is actually deployed and accepted, the repository-local empty style remains the default and no live geographic coverage is claimed.
