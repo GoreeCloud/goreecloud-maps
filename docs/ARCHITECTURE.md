@@ -27,6 +27,8 @@ GoreeCloud Location is adjacent to this diagram rather than inside the Maps data
 
 The default `public/map-style.json` has no remote sources. A live map only appears when `VITE_MAP_STYLE_URL` is set to an approved MapLibre-compatible style endpoint. This is intentional: cloning the repository must not silently disclose the user's IP address, viewport, or map activity to an unrelated public tile service.
 
+The web search and directions controls are not yet connected to the provider-backed API. A server-side provider implementation therefore does not yet constitute an end-to-end place-search or directions experience.
+
 ## API
 
 `services/api` is the initial protected application API. It requires:
@@ -40,6 +42,8 @@ The API does not accept a user ID from the client as an authorization authority.
 
 The service intentionally exits at startup when the configured database role can own/bypass the RLS-protected tables.
 
+Initial provider-backed application routes now include authenticated forward geocoding, reverse geocoding, and route planning. A public capabilities route reports only whether geocoding/routing are configured; it does not expose provider origins or credentials. Provider-dependent protected routes remain unavailable when no approved endpoint is configured.
+
 ## Database and multi-user authorization
 
 `db/migrations/0001_multi_user_foundation.sql` introduces first-party spatial and collaborative state. The initial model includes users, preferences, saved places, collections, collection members, collection items, and security-sensitive audit events.
@@ -50,22 +54,29 @@ The database owner/migration role and API runtime role must be separate. The RLS
 
 ## Provider boundary
 
-Provider integration is capability-based. Maps will not leak provider-specific response models through its first-party APIs or persistent user-data schema.
+Provider integration is capability-based. Maps does not leak provider-specific response models through its first-party APIs or persistent user-data schema.
 
-Planned adapter boundaries include:
+Implemented initial server-side provider adapters are:
+
+- a Nominatim-compatible forward/reverse geocoding adapter using fixed `/search` and `/reverse` actions;
+- a Valhalla-compatible route adapter using fixed `/route`, normalized for drive, walk, bicycle, and transit/multimodal modes.
+
+These adapters are configured only by server-side environment values. No provider origin is enabled by default. Base URLs must be absolute HTTP(S) origins/paths without embedded credentials, query strings, or fragments. Requests have bounded timeouts/responses and validation, and provider failures are logged by operation class without map searches, coordinates, route origins/destinations, or provider URLs.
+
+This source boundary is not a complete production SSRF/egress control. Approved production deployment still requires network-level egress controls, redirect/DNS review, licensing/provenance acceptance, capacity/rate-limit controls, and Privacy Shield/Wardveil evidence. See `docs/PROVIDERS.md`.
+
+Additional planned adapter boundaries include:
 
 - vector/base-map tiles and styles;
-- forward and reverse geocoding;
-- place search and POI enrichment;
-- directions/routing;
-- transit;
+- place/POI enrichment beyond geocoding;
+- transit feeds/services beyond the current multimodal route seam;
 - traffic and incidents;
 - terrain/elevation;
 - aerial/satellite imagery;
 - street-level imagery;
 - indoor maps.
 
-MapLibre is the selected initial renderer, not the map-data provider. PostGIS is the first-party user/spatial state store, not the sole source of public geographic truth. A self-hosted Valhalla-class router is the preferred initial routing direction, but the application-facing route contract remains replaceable.
+MapLibre is the selected initial renderer, not the map-data provider. PostGIS is the first-party user/spatial state store, not the sole source of public geographic truth. Nominatim- and Valhalla-compatible interfaces are replaceable application adapters rather than permanent provider commitments.
 
 ## Identity boundary
 
@@ -79,9 +90,13 @@ Precise user location, origins/destinations, private route plans, saved places, 
 
 Public map resources and private user resources require separate cache and authorization policies. External provider calls must be documented with data-minimization and provenance requirements before production use.
 
+The initial provider handlers intentionally avoid logging raw search queries, precise coordinates, route waypoints, provider response bodies, and provider endpoint URLs. This is a source-level minimization control, not a substitute for runtime observability/privacy acceptance.
+
 ## Resilience
 
 The architecture separates public map/provider dependencies from durable user-owned data. A provider outage must not make previously saved collections disappear. Offline packages are planned as versioned resources with integrity, quota, update, rollback, and deletion behavior.
+
+Provider configuration is optional. The service exposes configured/not-configured capability state so clients can distinguish a missing capability from an empty place/route result.
 
 ## Deployment boundary
 
