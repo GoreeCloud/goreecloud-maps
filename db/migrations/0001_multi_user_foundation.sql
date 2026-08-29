@@ -126,14 +126,36 @@ AS $$
     WHERE c.id = target_collection_id
 $$;
 
-REVOKE ALL ON FUNCTION maps.collection_access_role(uuid) FROM PUBLIC;
+CREATE OR REPLACE FUNCTION maps.prevent_collection_owner_change()
+RETURNS trigger
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    IF NEW.owner_user_id IS DISTINCT FROM OLD.owner_user_id THEN
+        RAISE EXCEPTION 'collection ownership changes require an explicit transfer workflow'
+            USING ERRCODE = '42501';
+    END IF;
+    RETURN NEW;
+END;
+$$;
+
+CREATE TRIGGER collections_owner_immutable
+BEFORE UPDATE OF owner_user_id ON maps.collections
+FOR EACH ROW
+EXECUTE FUNCTION maps.prevent_collection_owner_change();
 
 ALTER TABLE maps.preferences ENABLE ROW LEVEL SECURITY;
+ALTER TABLE maps.preferences FORCE ROW LEVEL SECURITY;
 ALTER TABLE maps.saved_places ENABLE ROW LEVEL SECURITY;
+ALTER TABLE maps.saved_places FORCE ROW LEVEL SECURITY;
 ALTER TABLE maps.collections ENABLE ROW LEVEL SECURITY;
+ALTER TABLE maps.collections FORCE ROW LEVEL SECURITY;
 ALTER TABLE maps.collection_members ENABLE ROW LEVEL SECURITY;
+ALTER TABLE maps.collection_members FORCE ROW LEVEL SECURITY;
 ALTER TABLE maps.collection_items ENABLE ROW LEVEL SECURITY;
+ALTER TABLE maps.collection_items FORCE ROW LEVEL SECURITY;
 ALTER TABLE maps.audit_events ENABLE ROW LEVEL SECURITY;
+ALTER TABLE maps.audit_events FORCE ROW LEVEL SECURITY;
 
 CREATE POLICY preferences_owner_all
 ON maps.preferences
@@ -169,11 +191,7 @@ CREATE POLICY collections_update_owner_or_editor
 ON maps.collections
 FOR UPDATE
 USING (maps.collection_access_role(id) IN ('owner', 'editor'))
-WITH CHECK (owner_user_id = (
-    SELECT c.owner_user_id
-    FROM maps.collections AS c
-    WHERE c.id = collections.id
-));
+WITH CHECK (maps.collection_access_role(id) IN ('owner', 'editor'));
 
 CREATE POLICY collections_delete_owner
 ON maps.collections
