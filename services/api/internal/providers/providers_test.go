@@ -3,6 +3,7 @@ package providers
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -58,6 +59,32 @@ func TestSearchRequiresConfiguredGeocoder(t *testing.T) {
 	}
 	if _, err := providers.Search(context.Background(), "test", 10, ""); err != ErrNotConfigured {
 		t.Fatalf("expected ErrNotConfigured, got %v", err)
+	}
+}
+
+func TestSearchRefusesProviderRedirect(t *testing.T) {
+	destinationReached := false
+	destination := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		destinationReached = true
+		_, _ = w.Write([]byte(`[]`))
+	}))
+	defer destination.Close()
+
+	provider := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		http.Redirect(w, &http.Request{}, destination.URL, http.StatusFound)
+	}))
+	defer provider.Close()
+
+	providers, err := NewSet(provider.URL, "", "")
+	if err != nil {
+		t.Fatalf("NewSet failed: %v", err)
+	}
+	_, err = providers.Search(context.Background(), "test", 10, "")
+	if !errors.Is(err, ErrUpstream) {
+		t.Fatalf("expected ErrUpstream, got %v", err)
+	}
+	if destinationReached {
+		t.Fatal("provider redirect destination must not be reached")
 	}
 }
 
