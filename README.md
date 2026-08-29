@@ -1,1 +1,80 @@
-# goreecloud-maps
+# GoreeCloud Maps
+
+GoreeCloud Maps is the first-party GoreeCloud mapping, place-discovery, directions, navigation, and collaborative map application. It is being built as an original GoreeCloud product with a privacy-first, self-hostable architecture and multi-user support.
+
+**Status:** Development
+
+## Product boundary
+
+GoreeCloud Maps owns the map experience: map rendering, place search and discovery, place cards, directions and route planning, navigation presentation, saved places, collections, collaborative maps, offline map packages, map layers, user-contributed map feedback, and provider orchestration.
+
+GoreeCloud Location remains the authority for personal location history, live device location, tracking, Find My capabilities, geofences, and location-sharing permissions. Maps consumes approved Location capabilities rather than duplicating that sensitive data domain.
+
+## Design and platform requirements
+
+Maps targets the current Stable Glaze UI contract, **Glaze UI 2.0.0**, including Glaze Material semantics, adaptive form-factor transformations, connected transitions, accessible effects fallbacks, reduced-motion behavior, and the Canvas / Surface / Soft Glaze / Glaze / Deep Glaze / Live Glaze hierarchy.
+
+Stable release qualification also requires current accepted integration with:
+
+- Privacy Shield for privacy controls, consent, data minimization, private/approximate location behavior, and truthful privacy state.
+- Wardveil Security for security state, abuse resistance, protected service boundaries, and evidence-backed protection experiences.
+- Everkeep for backup, recovery, preservation, portability, and continuity of user-owned map data.
+- GoreeCloud Mesh for governed interoperability with first-party GoreeCloud services.
+
+Maps must not claim production readiness from design-system alignment alone. Application-specific runtime, accessibility, security, privacy, resilience, platform, and real-device acceptance remain required.
+
+## Architecture direction
+
+The product is designed around replaceable capabilities rather than proprietary platform lock-in:
+
+- **Web renderer:** MapLibre GL JS.
+- **Native renderer:** MapLibre Native where a narrow rendering dependency is appropriate.
+- **Spatial database:** PostgreSQL + PostGIS.
+- **Routing:** provider interface with self-hosted Valhalla-class routing as the preferred baseline.
+- **Geocoding/search:** GoreeCloud-owned provider interface backed by self-hostable geocoding/search infrastructure and GoreeCloud Search integration.
+- **Map data:** open, license-compliant sources such as OpenStreetMap and other approved datasets, processed and served through GoreeCloud-controlled infrastructure.
+- **Tiles/packages:** vector-tile and offline-package pipelines designed for self-hosting, caching, versioning, rollback, and regional downloads.
+- **Identity:** GoreeCloud Identity is the authentication and principal authority.
+- **Location:** GoreeCloud Location supplies approved device/user location capabilities.
+
+Provider adapters are mandatory so routing, geocoding, traffic, transit, imagery, and tile delivery can evolve without rewriting the application.
+
+## Multi-user model
+
+Maps is designed for individual users, households, teams, and shared collections. User-scoped resources must remain isolated by default. Sharing is explicit and capability-scoped.
+
+Core collaborative resources include saved places, collections/lists, shared maps, route plans, annotations, contributed edits, and optional ETA/location overlays delegated to GoreeCloud Location. Roles are modeled explicitly rather than inferred from possession of a URL.
+
+## Experience direction
+
+The experience is heavily inspired by the useful interaction patterns users expect from leading map products while remaining visually and technically original to GoreeCloud. The roadmap includes:
+
+- fast pan/zoom/rotate/tilt map interaction;
+- 2D, globe, terrain, and 3D building views;
+- rich place cards and category discovery;
+- driving, walking, cycling, transit, and multimodal route planning;
+- turn-by-turn navigation with lane, maneuver, speed, incident, and arrival context where supported by verified data;
+- offline regions and offline routing where supported;
+- saved places, favorites, guides, collections, and collaborative maps;
+- privacy-preserving search/history controls;
+- live traffic, closures, hazards, and incident reports when reliable data pipelines are available;
+- accessible map alternatives, keyboard/pointer/touch navigation, high-contrast modes, reduced transparency, and reduced motion;
+- mobile, tablet, foldable, desktop, TV, wearable, and future spatial adaptations where the applicable Glaze UI and platform acceptance requirements are satisfied.
+
+## Repository documents
+
+- [SPECIFICATIONS.md](SPECIFICATIONS.md) — product, architecture, data, API, security, and acceptance requirements.
+- [FEATURES.md](FEATURES.md) — feature inventory with implementation status.
+- [BENEFITS.md](BENEFITS.md) — user, administrator, privacy, and platform benefits.
+- [COMPETITIVE-OBJECTIVES.md](COMPETITIVE-OBJECTIVES.md) — competitive capability targets and differentiation.
+- `docs/` — architecture, provider, Glaze UI, privacy/security, and integration records as implementation progresses.
+
+## Development rules
+
+GoreeCloud Maps is an original GoreeCloud application. Complete third-party map applications are not used as the product foundation. Narrow foundational dependencies may be adopted when rebuilding them would increase security, protocol, geospatial, rendering, codec, or platform risk.
+
+Map data, imagery, reviews, proprietary place content, and navigation data from Google Maps or Apple Maps must not be copied, scraped, or represented as GoreeCloud-owned data. Inspiration is limited to product capability and interaction objectives.
+
+## License
+
+Unless otherwise noted, repository source is licensed under the GNU Affero General Public License v3.0. Third-party datasets and dependencies retain their own licenses and attribution requirements.
