@@ -137,6 +137,9 @@ func (s *Store) UpdateSavedPlace(ctx context.Context, userID, savedPlaceID strin
 	if input.ExpectedRevision < 1 || (input.Name == nil && input.Address == nil && input.Latitude == nil && input.Longitude == nil && input.Note == nil) {
 		return SavedPlace{}, ErrInvalidInput
 	}
+	if (input.Latitude == nil) != (input.Longitude == nil) {
+		return SavedPlace{}, ErrInvalidInput
+	}
 
 	var name any
 	if input.Name != nil {
@@ -162,10 +165,7 @@ func (s *Store) UpdateSavedPlace(ctx context.Context, userID, savedPlaceID strin
 		}
 		note = trimmed
 	}
-	if input.Latitude != nil && (*input.Latitude < -90 || *input.Latitude > 90) {
-		return SavedPlace{}, ErrInvalidInput
-	}
-	if input.Longitude != nil && (*input.Longitude < -180 || *input.Longitude > 180) {
+	if input.Latitude != nil && !validCoordinates(*input.Latitude, *input.Longitude) {
 		return SavedPlace{}, ErrInvalidInput
 	}
 
@@ -177,13 +177,8 @@ func (s *Store) UpdateSavedPlace(ctx context.Context, userID, savedPlaceID strin
 				name = COALESCE($2::text, name),
 				address = CASE WHEN $3::text IS NULL THEN address ELSE NULLIF($3::text, '') END,
 				position = CASE
-					WHEN $4::double precision IS NULL AND $5::double precision IS NULL THEN position
-					ELSE ST_SetSRID(
-						ST_MakePoint(
-							COALESCE($5::double precision, ST_X(position::geometry)),
-							COALESCE($4::double precision, ST_Y(position::geometry))
-						), 4326
-					)::geography
+					WHEN $4::double precision IS NULL THEN position
+					ELSE ST_SetSRID(ST_MakePoint($5::double precision, $4::double precision), 4326)::geography
 				END,
 				note = CASE WHEN $6::text IS NULL THEN note ELSE NULLIF($6::text, '') END,
 				revision = revision + 1,
@@ -246,14 +241,10 @@ func (s *Store) DeleteSavedPlace(ctx context.Context, userID, savedPlaceID strin
 
 func validSavedPlaceText(provider, providerPlaceID, name, address, note string) bool {
 	return len([]rune(provider)) >= 1 && len([]rune(provider)) <= 80 &&
-		len([]rune(providerPlaceID)) <= 512 &&
+		len([]rune(providerPlaceID)) <= 500 &&
 		len([]rune(name)) >= 1 && len([]rune(name)) <= 240 &&
 		len([]rune(address)) <= 1000 &&
 		len([]rune(note)) <= 4000
-}
-
-func validCoordinates(latitude, longitude float64) bool {
-	return latitude >= -90 && latitude <= 90 && longitude >= -180 && longitude <= 180
 }
 
 func normalizeSavedPlaceDBError(err error) error {
