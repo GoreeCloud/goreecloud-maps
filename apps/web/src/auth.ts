@@ -93,6 +93,11 @@ export class IdentityClient {
       this.clearCallbackParameters(current);
       throw new Error(description || 'GoreeCloud Identity did not complete sign-in.');
     }
+    if (!code) {
+      this.clearTransientState();
+      this.clearCallbackParameters(current);
+      throw new Error('GoreeCloud Identity callback did not include an authorization code.');
+    }
 
     const expectedState = sessionStorage.getItem(stateKey);
     const verifier = sessionStorage.getItem(pkceVerifierKey);
