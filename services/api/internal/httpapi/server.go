@@ -6,17 +6,20 @@ import (
 	"io"
 	"log/slog"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/GoreeCloud/goreecloud-maps/services/api/internal/auth"
+	"github.com/GoreeCloud/goreecloud-maps/services/api/internal/providers"
 	"github.com/GoreeCloud/goreecloud-maps/services/api/internal/store"
 )
 
 type Server struct {
-	logger   *slog.Logger
-	store    *store.Store
-	verifier *auth.Verifier
-	mux      *http.ServeMux
+	logger    *slog.Logger
+	store     *store.Store
+	verifier  *auth.Verifier
+	providers providers.Set
+	mux       *http.ServeMux
 }
 
 type apiError struct {
@@ -26,17 +29,22 @@ type apiError struct {
 	} `json:"error"`
 }
 
-func New(logger *slog.Logger, dataStore *store.Store, verifier *auth.Verifier) http.Handler {
+func New(logger *slog.Logger, dataStore *store.Store, verifier *auth.Verifier, providerSet providers.Set) http.Handler {
 	server := &Server{
-		logger:   logger,
-		store:    dataStore,
-		verifier: verifier,
-		mux:      http.NewServeMux(),
+		logger:    logger,
+		store:     dataStore,
+		verifier:  verifier,
+		providers: providerSet,
+		mux:       http.NewServeMux(),
 	}
 
 	server.mux.HandleFunc("GET /healthz", server.health)
 	server.mux.HandleFunc("GET /readyz", server.ready)
+	server.mux.HandleFunc("GET /api/v1/capabilities", server.capabilities)
 	server.mux.HandleFunc("GET /api/v1/me", server.me)
+	server.mux.HandleFunc("GET /api/v1/search", server.searchPlaces)
+	server.mux.HandleFunc("GET /api/v1/reverse", server.reversePlace)
+	server.mux.HandleFunc("POST /api/v1/routes", server.createRoute)
 	server.mux.HandleFunc("GET /api/v1/collections", server.listCollections)
 	server.mux.HandleFunc("POST /api/v1/collections", server.createCollection)
 
@@ -56,12 +64,92 @@ func (s *Server) ready(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]string{"status": "ready"})
 }
 
+func (s *Server) capabilities(w http.ResponseWriter, _ *http.Request) {
+	writeJSON(w, http.StatusOK, map[string]any{
+		"providers": s.providers.Capabilities(),
+	})
+}
+
 func (s *Server) me(w http.ResponseWriter, r *http.Request) {
 	user, ok := s.authenticatedUser(w, r)
 	if !ok {
 		return
 	}
 	writeJSON(w, http.StatusOK, user)
+}
+
+func (s *Server) searchPlaces(w http.ResponseWriter, r *http.Request) {
+	if _, ok := s.authenticatedUser(w, r); !ok {
+		return
+	}
+
+	limit := 10
+	if rawLimit := strings.TrimSpace(r.URL.Query().Get("limit")); rawLimit != "" {
+		parsedLimit, err := strconv.Atoi(rawLimit)
+		if err != nil || parsedLimit < 1 || parsedLimit > 20 {
+			writeAPIError(w, http.StatusBadRequest, "invalid_limit", "Search limit must be between 1 and 20.")
+			return
+		}
+		limit = parsedLimit
+	}
+
+	results, err := s.providers.Search(r.Context(), r.URL.Query().Get("q"), limit, r.Header.Get("Accept-Language"))
+	if err != nil {
+		s.writeProviderError(w, err, "Place search")
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"results": results})
+}
+
+func (s *Server) reversePlace(w http.ResponseWriter, r *http.Request) {
+	if _, ok := s.authenticatedUser(w, r); !ok {
+		return
+	}
+
+	latitude, err := strconv.ParseFloat(strings.TrimSpace(r.URL.Query().Get("latitude")), 64)
+	if err != nil {
+		writeAPIError(w, http.StatusBadRequest, "invalid_coordinate", "A valid latitude is required.")
+		return
+	}
+	longitude, err := strconv.ParseFloat(strings.TrimSpace(r.URL.Query().Get("longitude")), 64)
+	if err != nil {
+		writeAPIError(w, http.StatusBadRequest, "invalid_coordinate", "A valid longitude is required.")
+		return
+	}
+
+	result, err := s.providers.Reverse(r.Context(), latitude, longitude, r.Header.Get("Accept-Language"))
+	if err != nil {
+		s.writeProviderError(w, err, "Reverse geocoding")
+		return
+	}
+	writeJSON(w, http.StatusOK, result)
+}
+
+func (s *Server) createRoute(w http.ResponseWriter, r *http.Request) {
+	if _, ok := s.authenticatedUser(w, r); !ok {
+		return
+	}
+
+	r.Body = http.MaxBytesReader(w, r.Body, 64<<10)
+	decoder := json.NewDecoder(r.Body)
+	decoder.DisallowUnknownFields()
+
+	var payload providers.RouteRequest
+	if err := decoder.Decode(&payload); err != nil {
+		writeAPIError(w, http.StatusBadRequest, "invalid_request", "A valid route payload is required.")
+		return
+	}
+	if err := ensureJSONEOF(decoder); err != nil {
+		writeAPIError(w, http.StatusBadRequest, "invalid_request", "Only one JSON object is allowed.")
+		return
+	}
+
+	route, err := s.providers.Route(r.Context(), payload)
+	if err != nil {
+		s.writeProviderError(w, err, "Route planning")
+		return
+	}
+	writeJSON(w, http.StatusOK, route)
 }
 
 func (s *Server) listCollections(w http.ResponseWriter, r *http.Request) {
@@ -139,6 +227,18 @@ func (s *Server) authenticatedUser(w http.ResponseWriter, r *http.Request) (stor
 		return store.User{}, false
 	}
 	return user, true
+}
+
+func (s *Server) writeProviderError(w http.ResponseWriter, err error, operation string) {
+	switch {
+	case errors.Is(err, providers.ErrNotConfigured):
+		writeAPIError(w, http.StatusServiceUnavailable, "provider_not_configured", operation+" is not configured.")
+	case errors.Is(err, providers.ErrInvalidRequest):
+		writeAPIError(w, http.StatusUnprocessableEntity, "invalid_request", operation+" request is invalid.")
+	default:
+		s.logger.Warn("map provider operation failed", "operation", operation)
+		writeAPIError(w, http.StatusBadGateway, "provider_unavailable", operation+" is temporarily unavailable.")
+	}
 }
 
 func (s *Server) securityHeaders(next http.Handler) http.Handler {
