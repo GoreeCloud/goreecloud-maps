@@ -59,6 +59,7 @@ The implemented source boundary includes:
 
 - no hard-coded public demo-provider origin;
 - fixed provider action paths rather than caller-controlled upstream paths;
+- provider HTTP redirects are refused rather than automatically followed;
 - a six-second provider HTTP timeout;
 - a two-MiB maximum decoded provider response stream;
 - bounded search-result limits and route waypoint counts;
@@ -74,7 +75,7 @@ These controls reduce accidental disclosure and configuration abuse, but they ar
 Before a provider can be approved for production Maps traffic, acceptance must cover at least:
 
 - GoreeCloud-controlled or explicitly approved provider endpoints;
-- network egress restrictions and DNS/redirect behavior appropriate to the runtime;
+- network egress restrictions and DNS behavior appropriate to the runtime;
 - source licensing, attribution, provenance, retention, and redistribution terms;
 - provider capacity, quotas, rate limiting, abuse controls, and failure behavior;
 - secret management when credentials are required;
