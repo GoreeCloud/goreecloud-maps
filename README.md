@@ -30,14 +30,16 @@ The product is designed around replaceable capabilities rather than proprietary 
 - **Web renderer:** MapLibre GL JS.
 - **Native renderer:** MapLibre Native where a narrow rendering dependency is appropriate.
 - **Spatial database:** PostgreSQL + PostGIS.
-- **Routing:** provider interface with self-hosted Valhalla-class routing as the preferred baseline.
-- **Geocoding/search:** GoreeCloud-owned provider interface backed by self-hostable geocoding/search infrastructure and GoreeCloud Search integration.
+- **Routing:** provider interface with a Valhalla-compatible server adapter implemented as the initial self-hostable baseline.
+- **Geocoding/search:** GoreeCloud-owned provider interface with a Nominatim-compatible forward/reverse adapter implemented, plus planned GoreeCloud Search interoperability.
 - **Map data:** open, license-compliant sources such as OpenStreetMap and other approved datasets, processed and served through GoreeCloud-controlled infrastructure.
 - **Tiles/packages:** vector-tile and offline-package pipelines designed for self-hosting, caching, versioning, rollback, and regional downloads.
 - **Identity:** GoreeCloud Identity is the authentication and principal authority.
 - **Location:** GoreeCloud Location supplies approved device/user location capabilities.
 
-Provider adapters are mandatory so routing, geocoding, traffic, transit, imagery, and tile delivery can evolve without rewriting the application.
+Provider adapters are mandatory so routing, geocoding, traffic, transit, imagery, and tile delivery can evolve without rewriting the application. The implemented geocoding and routing adapters are configuration-driven and have no provider endpoint enabled by default; they are source foundations, not evidence of live provider coverage or production acceptance.
+
+See [docs/PROVIDERS.md](docs/PROVIDERS.md) for the implemented provider contract and remaining production gates.
 
 ## Multi-user model
 
@@ -67,6 +69,7 @@ The experience is heavily inspired by the useful interaction patterns users expe
 - [FEATURES.md](FEATURES.md) — feature inventory with implementation status.
 - [BENEFITS.md](BENEFITS.md) — user, administrator, privacy, and platform benefits.
 - [COMPETITIVE-OBJECTIVES.md](COMPETITIVE-OBJECTIVES.md) — competitive capability targets and differentiation.
+- [docs/PROVIDERS.md](docs/PROVIDERS.md) — provider API contracts, configuration, privacy/security controls, and acceptance gates.
 - `docs/` — architecture, provider, Glaze UI, privacy/security, and integration records as implementation progresses.
 
 ## Development rules
