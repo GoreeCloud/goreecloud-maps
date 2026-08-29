@@ -32,7 +32,7 @@
 .collection-card p,
 .route-summary p,
 .maneuver-list small {
-  color: var(--text-secondary);
+  color: var(--glaze-color-text-secondary);
 }
 
 .integration-list {
@@ -44,8 +44,8 @@
 .collection-card,
 .collection-item-card {
   width: 100%;
-  border: 1px solid var(--border-subtle);
-  background: var(--surface-raised);
+  border: 1px solid var(--glaze-color-border);
+  background: var(--glaze-color-surface-raised);
   color: inherit;
   border-radius: 1rem;
   padding: 0.85rem;
@@ -55,7 +55,7 @@
 .result-card:hover,
 .collection-card:hover,
 .collection-item-card:hover {
-  background: var(--surface-hover);
+  background: color-mix(in srgb, var(--glaze-color-surface-raised) 88%, var(--glaze-color-accent-soft));
 }
 
 .result-card strong,
@@ -80,8 +80,8 @@
   min-height: 1.75rem;
   padding: 0.15rem 0.55rem;
   border-radius: 999px;
-  border: 1px solid var(--border-subtle);
-  background: var(--surface-raised);
+  border: 1px solid var(--glaze-color-border);
+  background: var(--glaze-color-surface-raised);
 }
 
 .integration-form {
@@ -101,9 +101,9 @@
 .integration-form textarea {
   width: 100%;
   min-height: 2.75rem;
-  border: 1px solid var(--border-subtle);
+  border: 1px solid var(--glaze-color-border);
   border-radius: 0.8rem;
-  background: var(--surface-raised);
+  background: var(--glaze-color-surface-raised);
   color: inherit;
   padding: 0.65rem 0.75rem;
   font: inherit;
@@ -122,18 +122,18 @@
 
 .integration-button {
   min-height: 2.75rem;
-  border: 1px solid var(--border-subtle);
+  border: 1px solid var(--glaze-color-border);
   border-radius: 999px;
   padding: 0.55rem 0.9rem;
-  background: var(--surface-raised);
+  background: var(--glaze-color-surface-raised);
   color: inherit;
   font: inherit;
   font-weight: 700;
 }
 
 .integration-button.primary {
-  background: var(--text-primary);
-  color: var(--surface-canvas);
+  background: var(--glaze-color-accent);
+  color: var(--glaze-color-accent-contrast);
 }
 
 .route-summary {
@@ -158,7 +158,7 @@
   display: grid;
   gap: 0.15rem;
   padding: 0.65rem 0;
-  border-top: 1px solid var(--border-subtle);
+  border-top: 1px solid var(--glaze-color-border);
 }
 
 .mobile-integration-content {
