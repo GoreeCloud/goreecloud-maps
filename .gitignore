@@ -1,0 +1,38 @@
+# Operating-system and editor state
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Local environment and secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# JavaScript / TypeScript
+node_modules/
+dist/
+.vite/
+*.tsbuildinfo
+npm-debug.log*
+
+# Go
+bin/
+coverage.out
+
+# Local databases and generated map data
+*.sqlite
+*.sqlite3
+.local/
+data/
+tiles/
+offline-packages/
+
+# Test and temporary output
+coverage/
+tmp/
+*.tmp
