@@ -7,25 +7,27 @@ Status vocabulary: **Implemented**, **In progress**, **Planned**, or **Blocked b
 | Feature | Status | Notes |
 |---|---|---|
 | Original GoreeCloud application model | Implemented | Repository and architecture prohibit a complete third-party application fork. |
-| Glaze UI 2.0.0 target | In progress | Design/interaction contract selected; app-specific implementation and acceptance required. |
-| Replaceable geospatial providers | In progress | Provider boundaries are defined in specifications; adapters follow in implementation milestones. |
-| Multi-user tenancy model | In progress | Owner/member/role model defined; API/database enforcement is the next implementation milestone. |
+| Glaze UI 2.0.0 target | In progress | Web shell applies the current material/layout/accessibility contract; product-specific rendered acceptance remains required. |
+| Replaceable geospatial providers | In progress | Provider boundaries and configurable MapLibre style seam are implemented; live provider adapters remain pending. |
+| Multi-user tenancy model | In progress | Identity-subject mapping, owner/member roles, RLS policies, API runtime-role fail-closed checks, and collection list/create primitives are implemented; broader collaboration acceptance remains pending. |
 | GoreeCloud Location boundary | Implemented | Maps and Location responsibilities are explicitly separated. |
 
 ## Map experience
 
 | Feature | Status |
 |---|---|
-| Interactive 2D vector map | Planned |
-| Smooth pan, zoom, rotate, pitch | Planned |
+| Interactive 2D vector map | In progress |
+| Smooth pan, zoom, rotate, pitch | In progress |
 | User-location control | Planned |
-| Light, dark, and Deep Dark map appearances | Planned |
+| Light, dark, and Deep Dark map appearances | In progress |
 | Globe view | Planned |
 | Terrain/elevation | Planned |
 | 3D buildings | Planned |
 | Custom layers and overlays | Planned |
 | Map style switching | Planned |
 | Accessible non-map/list alternatives | Planned |
+
+The current renderer shell is functional but uses a local data-empty style unless an approved `VITE_MAP_STYLE_URL` is configured. It therefore does not yet claim live geographic map coverage.
 
 ## Search, places, and discovery
 
@@ -35,12 +37,14 @@ Status vocabulary: **Implemented**, **In progress**, **Planned**, or **Blocked b
 | Reverse geocoding | Planned |
 | Nearby/category search | Planned |
 | Rich place cards | Planned |
-| Favorites and saved places | Planned |
-| Personal notes | Planned |
-| Collections and guides | Planned |
+| Favorites and saved places | In progress |
+| Personal notes | In progress |
+| Collections and guides | In progress |
 | Recently viewed/search history controls | Planned |
 | Place correction/feedback workflow | Planned |
 | Search integration with GoreeCloud Search | Planned |
+
+Saved-place and collection storage primitives exist in the first migration. Saved-place API/UI workflows remain pending.
 
 ## Directions and navigation
 
@@ -66,28 +70,34 @@ Status vocabulary: **Implemented**, **In progress**, **Planned**, or **Blocked b
 
 | Feature | Status |
 |---|---|
+| OIDC-authenticated Maps users | In progress |
 | Per-user private saved data | In progress |
-| Shared collections | Planned |
+| Shared collections | In progress |
 | Owner/editor/viewer roles | In progress |
+| PostgreSQL row-level security | In progress |
+| Runtime database privilege guard | Implemented |
 | Invitations and revocation | Planned |
 | Collaborative map annotations | Planned |
 | Shared route plans | Planned |
 | Household/group collections | Planned |
 | Revocable share links | Planned |
 | Optional ETA/location overlays through GoreeCloud Location | Planned |
-| Audit trail for security-sensitive sharing changes | Planned |
+| Audit trail for security-sensitive sharing changes | In progress |
+
+The database schema and protected collection primitives exist, but full two-user integration acceptance has not yet run. GoreeCloud Identity also remains subject to its own platform-wide production SSO acceptance.
 
 ## Offline and resilience
 
 | Feature | Status |
 |---|---|
+| Privacy-safe no-provider renderer fallback | Implemented |
 | Downloadable map regions | Planned |
 | Offline place index | Planned |
 | Offline routing graphs | Planned |
 | Package integrity/version metadata | Planned |
 | Background package updates | Planned |
 | Storage quotas and cleanup | Planned |
-| Stale/offline/degraded state presentation | Planned |
+| Stale/offline/degraded state presentation | In progress |
 
 ## Data and community
 
@@ -109,7 +119,7 @@ Status vocabulary: **Implemented**, **In progress**, **Planned**, or **Blocked b
 
 | Integration | Status |
 |---|---|
-| GoreeCloud Identity | Planned |
+| GoreeCloud Identity | In progress |
 | GoreeCloud Location | Planned |
 | GoreeCloud Search | Planned |
 | GoreeCloud Mesh | Planned |
@@ -120,4 +130,4 @@ Status vocabulary: **Implemented**, **In progress**, **Planned**, or **Blocked b
 
 ## Form factors
 
-Web is the first implementation target. Mobile, tablet, foldable, desktop, TV, wearable, and spatial interfaces are planned only where the applicable Glaze UI contract and platform-specific acceptance can be satisfied. A responsive web page alone does not constitute native or form-factor acceptance.
+The responsive web shell currently covers initial mobile and desktop composition work. Native mobile, tablet, foldable, desktop, TV, wearable, and spatial acceptance remain planned and must satisfy the applicable Glaze UI contract and platform-specific evidence requirements. Responsive web behavior alone does not constitute native or form-factor acceptance.
