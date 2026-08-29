@@ -57,7 +57,9 @@ The repository defines a separate public map-data delivery boundary under `mapda
 
 `VITE_MAP_STYLE_URL` remains a manual/legacy approved-style seam when no manifest endpoint is configured.
 
-This is a source/deployment contract only. The repository does not contain an approved basemap dataset and does not prove that the intended R2 buckets, Worker, Pages project, routes, or custom domains have been provisioned. Raster/satellite imagery, terrain, PMTiles/other archive formats, and additional source classes require future reviewed schemas. Production publication still requires dataset licensing/provenance, attribution, rendering quality, cache/rollback, CORS/origin policy, Privacy Shield, Wardveil Security, and Cloudflare runtime acceptance.
+Exact-head repository CI run #77 (run ID `33240913911`) passed on `167ffc5b5adb18bc639459181683ddabac35bee4`, including the web production build, manifest and style validation, Worker type/dry-run bundle, and the existing API/PostGIS acceptance suite. This validates the source contracts, not a live geographic-data deployment.
+
+The repository does not contain an approved basemap dataset and does not prove that the intended R2 buckets, Worker, Pages project, routes, or custom domains have been provisioned. Raster/satellite imagery, terrain, PMTiles/other archive formats, and additional source classes require future reviewed schemas. Production publication still requires dataset licensing/provenance, attribution, rendering quality, cache/rollback, CORS/origin policy, Privacy Shield, Wardveil Security, and Cloudflare runtime acceptance.
 
 See [mapdata/README.md](mapdata/README.md), [deployment/cloudflare/README.md](deployment/cloudflare/README.md), [docs/PROVIDERS.md](docs/PROVIDERS.md), and [docs/IDENTITY.md](docs/IDENTITY.md).
 
