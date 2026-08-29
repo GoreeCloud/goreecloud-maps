@@ -9,7 +9,7 @@ Status vocabulary: **Implemented**, **In progress**, **Planned**, or **Blocked b
 | Original GoreeCloud application model | Implemented | Repository and architecture prohibit a complete third-party application fork. |
 | Glaze UI 2.0.0 target | In progress | Web shell applies the current material/layout/accessibility contract; product-specific rendered acceptance remains required. |
 | Replaceable geospatial providers | In progress | Map-style seam plus Nominatim-compatible geocoding and Valhalla-compatible routing adapters are implemented; live provider deployment and acceptance remain pending. |
-| Multi-user tenancy model | In progress | Identity-subject mapping, owner/member roles, RLS policies, API runtime-role fail-closed checks, and collection list/create primitives are implemented; broader collaboration acceptance remains pending. |
+| Multi-user tenancy model | In progress | Identity-subject mapping, owner/member roles, RLS policies, API runtime-role fail-closed checks, collection primitives, and automated PostGIS isolation acceptance are implemented; broader collaboration and production-runtime acceptance remain pending. |
 | GoreeCloud Location boundary | Implemented | Maps and Location responsibilities are explicitly separated. |
 
 ## Map experience
@@ -76,7 +76,7 @@ The API now contains a normalized Valhalla-compatible route adapter for drive, w
 | Per-user private saved data | In progress |
 | Shared collections | In progress |
 | Owner/editor/viewer roles | In progress |
-| PostgreSQL row-level security | In progress |
+| PostgreSQL row-level security | Implemented |
 | Runtime database privilege guard | Implemented |
 | Invitations and revocation | Planned |
 | Collaborative map annotations | Planned |
@@ -86,7 +86,7 @@ The API now contains a normalized Valhalla-compatible route adapter for drive, w
 | Optional ETA/location overlays through GoreeCloud Location | Planned |
 | Audit trail for security-sensitive sharing changes | In progress |
 
-The database schema and protected collection primitives exist, but full two-user integration acceptance has not yet run. GoreeCloud Identity also remains subject to its own platform-wide production SSO acceptance.
+Automated integration acceptance now runs the migration against PostGIS and exercises owner/editor/viewer/stranger isolation, private saved-place visibility, editor mutation, viewer mutation denial, membership authority, member self-removal, immutable collection ownership, and the non-owner/no-`BYPASSRLS` runtime-role guard. This validates the current source authorization model in CI; it does not replace production database, GoreeCloud Identity SSO, load, backup, or deployment acceptance.
 
 ## Offline and resilience
 
