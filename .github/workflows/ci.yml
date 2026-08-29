@@ -64,6 +64,9 @@ jobs:
       - name: Validate release-manifest fixture
         run: node ../../scripts/validate-mapdata-release.mjs ../../mapdata/examples/release-manifest.example.json
 
+      - name: Validate release-style fixture
+        run: node ../../scripts/validate-mapdata-style.mjs ../../mapdata/examples/release-manifest.example.json ../../mapdata/examples/style.example.json
+
       - name: Type-check and dry-run Worker bundle
         run: npm run check
 
