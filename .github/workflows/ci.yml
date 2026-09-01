@@ -1,0 +1,129 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  web:
+    name: Web build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    defaults:
+      run:
+        working-directory: apps/web
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          package-manager-cache: false
+
+      - name: Install dependencies
+        run: npm install --ignore-scripts --no-audit --no-fund
+
+      - name: Build web client
+        run: npm run build
+
+  mapdata:
+    name: Map data edge contract
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    defaults:
+      run:
+        working-directory: services/mapdata-edge
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          package-manager-cache: false
+
+      - name: Install edge dependencies
+        run: npm install --ignore-scripts --no-audit --no-fund
+
+      - name: Validate release-manifest fixture
+        run: node ../../scripts/validate-mapdata-release.mjs ../../mapdata/examples/release-manifest.example.json
+
+      - name: Validate release-style fixture
+        run: node ../../scripts/validate-mapdata-style.mjs ../../mapdata/examples/release-manifest.example.json ../../mapdata/examples/style.example.json
+
+      - name: Type-check and dry-run Worker bundle
+        run: npm run check
+
+  api:
+    name: API and PostGIS tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    services:
+      postgis:
+        image: postgis/postgis:18-3.6
+        env:
+          POSTGRES_DB: goreecloud_maps_test
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: maps-ci-admin
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d goreecloud_maps_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 6
+
+    env:
+      MAPS_TEST_DATABASE_URL: postgres://postgres:maps-ci-admin@127.0.0.1:5432/goreecloud_maps_test?sslmode=disable
+
+    defaults:
+      run:
+        working-directory: services/api
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Set up Go
+        uses: actions/setup-go@v7
+        with:
+          go-version-file: services/api/go.mod
+          cache: false
+
+      - name: Download and verify modules
+        run: |
+          go mod download
+          go mod verify
+          go mod tidy
+          git diff --exit-code -- go.mod go.sum
+
+      - name: Verify formatting
+        run: |
+          unformatted="$(gofmt -l .)"
+          if [ -n "$unformatted" ]; then
+            printf 'The following Go files require gofmt:\n%s\n' "$unformatted"
+            exit 1
+          fi
+
+      - name: Vet API
+        run: go vet ./...
+
+      - name: Test API and multi-user RLS
+        run: go test ./...
