@@ -2,30 +2,36 @@
 
 Branding authority: `GoreeCloud/goreecloud-branding-assets`.
 
-## Current identity status
+## Approved product identity
 
-GoreeCloud Maps does **not yet have approved canonical product artwork**. Missing official artwork remains a visual-identity and production-readiness blocker. A generic location pin, GoreeCloud Location artwork, third-party map-provider branding, or other placeholder must not become the final GoreeCloud Maps identity.
-
-The reserved future canonical path is:
+GoreeCloud Maps now has approved canonical product artwork at:
 
 `products/maps/app-icon.svg`
 
-A first-round approval candidate is under review in `GoreeCloud/goreecloud-branding-assets` pull request #5 at:
+Canonical Git blob:
 
-`concepts/product-identity-round-1/maps.svg`
+`07b6e52e04c95e1ec9f703a9d323cf799481351c`
 
-That concept is not production artwork and must not be represented as approved until the canonical branding review and promotion gates are complete.
+The approved identity uses a folded three-panel map with a route crossing the panels. It is deliberately distinct from GoreeCloud Location's teardrop/pin identity and from third-party mapping-provider artwork.
+
+Source-level visual acceptance, small-size/grayscale review, ecosystem collision review, semantic-state review, and graphical-contrast evidence are retained in `GoreeCloud/goreecloud-branding-assets` under `concepts/product-identity-round-1/REVIEW-EVIDENCE.md`.
+
+## Current consumer state
+
+The current `main` branch does not contain a merged Maps application package, launcher resource tree, PWA manifest, or other platform-specific executable icon surface. No local derivative is therefore fabricated by this branding update.
+
+When a Maps application/web package is merged, its launcher, PWA, favicon, repository/release, or other required artwork must be generated as traceable derivatives of the exact canonical source above and must record the canonical Git blob in the applicable validation/evidence path.
 
 ## Identity boundary
 
-Maps represents map exploration, spatial context, route understanding, and navigation. GoreeCloud Location already owns the primary positioning/location-pin relationship, so Maps must remain distinguishable through map/navigation/spatial-context geometry rather than reusing Location's teardrop-pin silhouette.
+Maps represents map exploration, spatial context, route understanding, and navigation. GoreeCloud Location owns primary positioning/location semantics, so Maps remains distinguishable through map/navigation/spatial-context geometry rather than reusing Location's pin silhouette.
 
-The current candidate uses a folded-map silhouette with a route crossing its panels. Warm identity colors are branding only; they must never substitute for Glaze UI warning, danger, destructive, error, traffic-safety, or other semantic state treatments.
+Warm Maps identity colors are branding only. They must never substitute for Glaze UI warning, danger, destructive, error, traffic-safety, route-safety, or other semantic state treatments.
+
+The identity does not establish location accuracy, route availability, navigation safety, map freshness, provider authorization, privacy state, security state, or runtime acceptance.
 
 ## Consumer-derivative rule
 
-This repository is a branding consumer, not the canonical branding authority. Platform-specific application, repository, release, web, PWA, Android, or other local assets may be added only as traceable derivatives of an approved canonical source in `GoreeCloud/goreecloud-branding-assets`.
+This repository is a branding consumer, not the canonical branding authority. Platform-specific application, repository, release, web, PWA, Android, or other local assets may be added only as traceable derivatives of the approved canonical source in `GoreeCloud/goreecloud-branding-assets`.
 
-No local derivative is approved by this contract yet. After canonical promotion, this file must record the exact canonical path and Git blob together with required derivative paths, supported optical roles, and platform targets.
-
-Branding never establishes location accuracy, route availability, navigation safety, map freshness, privacy, security, or release claims.
+Branding acceptance does not establish production deployment, provider quality/licensing acceptance, Glaze UI consumer conformance, release acceptance, or Stable qualification.
