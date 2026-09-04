@@ -76,6 +76,24 @@ export type UpdateSavedPlaceInput = {
   expectedRevision: number;
 };
 
+export type SearchSaveContext = {
+  result: SearchResult;
+  save: () => Promise<SavedPlace>;
+};
+
+type SearchSaveListener = (contexts: readonly SearchSaveContext[]) => void;
+const searchSaveListeners = new Set<SearchSaveListener>();
+
+export function subscribeSearchSaveContext(listener: SearchSaveListener): () => void {
+  searchSaveListeners.add(listener);
+  return () => searchSaveListeners.delete(listener);
+}
+
+function searchProviderNamespace(resultID: string): string {
+  const match = resultID.trim().match(/^([a-z0-9-]+):/);
+  return match?.[1] ?? 'geocoder';
+}
+
 export type Collection = {
   id: string;
   name: string;
@@ -134,6 +152,18 @@ export class MapsAPI {
   async search(query: string, limit = 10): Promise<SearchResult[]> {
     const params = new URLSearchParams({ q: query, limit: String(limit) });
     const response = await this.request<{ results: SearchResult[] }>(`/search?${params.toString()}`);
+    const contexts = response.results.map((result): SearchSaveContext => ({
+      result,
+      save: () => this.createSavedPlace({
+        provider: searchProviderNamespace(result.id),
+        providerPlaceId: result.id,
+        name: result.name || result.label,
+        address: result.label,
+        latitude: result.latitude,
+        longitude: result.longitude,
+      }),
+    }));
+    searchSaveListeners.forEach((listener) => listener(contexts));
     return response.results;
   }
 

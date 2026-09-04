@@ -1,0 +1,46 @@
+.result-card-group {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.result-card-action-label {
+  display: block;
+  margin-top: 0.55rem;
+  color: var(--glaze-color-accent);
+  font-size: 0.78rem;
+  font-weight: 750;
+}
+
+.result-save-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  padding-inline: 0.15rem;
+}
+
+.result-save-button {
+  flex: 0 0 auto;
+}
+
+.result-save-status {
+  min-width: 0;
+  color: var(--glaze-color-text-secondary);
+  font-size: 0.8rem;
+}
+
+@media (max-width: 760px) {
+  .result-save-actions {
+    align-items: stretch;
+  }
+
+  .result-save-button {
+    min-width: 6rem;
+  }
+}
+
+@media (forced-colors: active) {
+  .result-card-action-label {
+    color: LinkText;
+  }
+}
