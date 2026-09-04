@@ -2,7 +2,7 @@ import * as maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import './styles.css';
 import './integration.css';
-import { MapsAPI, MapsApiError, type Collection, type Route, type SearchResult } from './api';
+import { MapsAPI, MapsApiError, type Collection, type Route, type SavedPlace, type SearchResult } from './api';
 import { IdentityClient } from './auth';
 import { configuredMapDataManifestURL, resolveMapDataRelease } from './map-data';
 
@@ -550,6 +550,183 @@ const renderCollections = async (): Promise<void> => {
   }
 };
 
+const validCoordinatePair = (latitude: number, longitude: number): boolean =>
+  Number.isFinite(latitude) && Number.isFinite(longitude) && latitude >= -90 && latitude <= 90 && longitude >= -180 && longitude <= 180;
+
+const focusSavedPlace = (place: SavedPlace): void => {
+  map.flyTo({ center: [place.longitude, place.latitude], zoom: Math.max(map.getZoom(), 14) });
+  selectedMarker?.remove();
+  selectedMarker = new maplibregl.Marker().setLngLat([place.longitude, place.latitude]).addTo(map);
+};
+
+const renderSavedPlaceDeleteConfirmation = (place: SavedPlace): void => {
+  setIntegrationContent(`
+    <div class="integration-heading">
+      <div><h2>Delete ${escapeHTML(place.name)}?</h2><p>This removes the saved place from your private Maps data.</p></div>
+    </div>
+    <p class="integration-note">The delete is revision-checked. If this place changed in another session, Maps will reject the stale delete instead of silently discarding newer data.</p>
+    <div class="integration-actions">
+      <button class="integration-button" type="button" data-cancel-delete-saved>Cancel</button>
+      <button class="integration-button primary" type="button" data-confirm-delete-saved>Delete place</button>
+    </div>
+  `);
+  document.querySelectorAll<HTMLButtonElement>('[data-cancel-delete-saved]').forEach((button) => {
+    button.addEventListener('click', () => renderSavedPlaceEditor(place));
+  });
+  document.querySelectorAll<HTMLButtonElement>('[data-confirm-delete-saved]').forEach((button) => {
+    button.addEventListener('click', () => {
+      button.disabled = true;
+      void api
+        .deleteSavedPlace(place.id, place.revision)
+        .then(() => {
+          showToast('Saved place deleted.');
+          return renderSavedPlaces();
+        })
+        .catch((error) => {
+          handleApiError(error);
+          void renderSavedPlaces();
+        });
+    });
+  });
+};
+
+const renderSavedPlaceEditor = (place: SavedPlace): void => {
+  setIntegrationContent(`
+    <div class="integration-heading">
+      <div><h2>Edit saved place</h2><p>Revision ${place.revision} · private to your Maps account.</p></div>
+      <button class="integration-button" type="button" data-back-saved>Back</button>
+    </div>
+    <form class="integration-form" data-edit-saved-form>
+      <label>Name<input name="name" maxlength="240" required value="${escapeHTML(place.name)}"></label>
+      <label>Address<input name="address" maxlength="1000" value="${escapeHTML(place.address ?? '')}" placeholder="Optional address"></label>
+      <label>Latitude<input name="latitude" type="number" min="-90" max="90" step="any" required value="${place.latitude}"></label>
+      <label>Longitude<input name="longitude" type="number" min="-180" max="180" step="any" required value="${place.longitude}"></label>
+      <label>Note<textarea name="note" maxlength="4000" placeholder="Optional private note">${escapeHTML(place.note ?? '')}</textarea></label>
+      <div class="integration-actions">
+        <button class="integration-button primary" type="submit">Save changes</button>
+        <button class="integration-button" type="button" data-show-saved-on-map>Show on map</button>
+        <button class="integration-button" type="button" data-delete-saved>Delete</button>
+      </div>
+    </form>
+  `);
+  document.querySelectorAll<HTMLButtonElement>('[data-back-saved]').forEach((button) => button.addEventListener('click', () => void renderSavedPlaces()));
+  document.querySelectorAll<HTMLButtonElement>('[data-show-saved-on-map]').forEach((button) => button.addEventListener('click', () => focusSavedPlace(place)));
+  document.querySelectorAll<HTMLButtonElement>('[data-delete-saved]').forEach((button) => button.addEventListener('click', () => renderSavedPlaceDeleteConfirmation(place)));
+  document.querySelectorAll<HTMLFormElement>('[data-edit-saved-form]').forEach((form) => {
+    form.addEventListener('submit', (event) => {
+      event.preventDefault();
+      const data = new FormData(form);
+      const name = String(data.get('name') ?? '').trim();
+      const address = String(data.get('address') ?? '').trim();
+      const note = String(data.get('note') ?? '').trim();
+      const latitude = Number(data.get('latitude'));
+      const longitude = Number(data.get('longitude'));
+      if (!name || !validCoordinatePair(latitude, longitude)) {
+        showToast('Enter a name and valid latitude/longitude coordinates.');
+        return;
+      }
+      const submit = form.querySelector<HTMLButtonElement>('button[type="submit"]');
+      if (submit) submit.disabled = true;
+      void api
+        .updateSavedPlace(place.id, {
+          name,
+          address,
+          latitude,
+          longitude,
+          note,
+          expectedRevision: place.revision,
+        })
+        .then((updated) => {
+          focusSavedPlace(updated);
+          showToast('Saved place updated.');
+          return renderSavedPlaces();
+        })
+        .catch((error) => {
+          handleApiError(error);
+          void renderSavedPlaces();
+        });
+    });
+  });
+};
+
+const renderSavedPlaces = async (): Promise<void> => {
+  if (!apiReachable) {
+    setIntegrationContent('<div class="integration-heading"><div><h2>Saved places unavailable</h2><p>The same-origin Maps API is not reachable.</p></div></div>');
+    return;
+  }
+  if (!requireAuthentication('Sign in to manage your private saved places.')) return;
+  setIntegrationContent('<div class="integration-heading"><div><h2>Saved places</h2><p>Loading your private saved places…</p></div></div>');
+  try {
+    const places = await api.listSavedPlaces();
+    const center = map.getCenter();
+    setIntegrationContent(`
+      <div class="integration-heading"><div><h2>Saved places</h2><p>${places.length} private place${places.length === 1 ? '' : 's'}.</p></div></div>
+      <form class="integration-form" data-new-saved-form>
+        <label>Name<input name="name" maxlength="240" required placeholder="Place name"></label>
+        <label>Address<input name="address" maxlength="1000" placeholder="Optional address"></label>
+        <label>Latitude<input name="latitude" type="number" min="-90" max="90" step="any" required value="${center.lat.toFixed(6)}"></label>
+        <label>Longitude<input name="longitude" type="number" min="-180" max="180" step="any" required value="${center.lng.toFixed(6)}"></label>
+        <label>Note<textarea name="note" maxlength="4000" placeholder="Optional private note"></textarea></label>
+        <p class="integration-note">Coordinates default to the current map center. This workflow does not request device location or read GoreeCloud Location history.</p>
+        <div class="integration-actions"><button class="integration-button primary" type="submit">Save place</button></div>
+      </form>
+      <div class="integration-list" style="margin-top: .8rem">
+        ${
+          places.length
+            ? places
+                .map(
+                  (place, index) => `<button type="button" class="collection-item-card" data-saved-index="${index}">
+                    <strong>${escapeHTML(place.name)}</strong>
+                    <p>${escapeHTML(place.address || `${place.latitude.toFixed(5)}, ${place.longitude.toFixed(5)}`)}</p>
+                    <div class="result-meta"><span class="status-pill">private</span><span class="status-pill">rev ${place.revision}</span></div>
+                  </button>`,
+                )
+                .join('')
+            : '<p class="integration-note">No saved places yet. Add one from the current map center.</p>'
+        }
+      </div>
+    `);
+    document.querySelectorAll<HTMLFormElement>('[data-new-saved-form]').forEach((form) => {
+      form.addEventListener('submit', (event) => {
+        event.preventDefault();
+        const data = new FormData(form);
+        const name = String(data.get('name') ?? '').trim();
+        const address = String(data.get('address') ?? '').trim();
+        const note = String(data.get('note') ?? '').trim();
+        const latitude = Number(data.get('latitude'));
+        const longitude = Number(data.get('longitude'));
+        if (!name || !validCoordinatePair(latitude, longitude)) {
+          showToast('Enter a name and valid latitude/longitude coordinates.');
+          return;
+        }
+        const submit = form.querySelector<HTMLButtonElement>('button[type="submit"]');
+        if (submit) submit.disabled = true;
+        void api
+          .createSavedPlace({ provider: 'manual', name, address, latitude, longitude, note })
+          .then((created) => {
+            focusSavedPlace(created);
+            showToast('Place saved.');
+            return renderSavedPlaces();
+          })
+          .catch((error) => {
+            handleApiError(error);
+            if (submit) submit.disabled = false;
+          });
+      });
+    });
+    document.querySelectorAll<HTMLButtonElement>('[data-saved-index]').forEach((button) => {
+      button.addEventListener('click', () => {
+        const place = places[Number(button.dataset.savedIndex)];
+        if (!place) return;
+        focusSavedPlace(place);
+        renderSavedPlaceEditor(place);
+      });
+    });
+  } catch (error) {
+    handleApiError(error);
+  }
+};
+
 map.on('error', () => {
   console.warn('Map renderer reported an error.');
   showToast('The current map style could not be fully loaded.');
@@ -621,7 +798,7 @@ document.querySelectorAll<HTMLButtonElement>('[data-action]').forEach((button) =
   button.addEventListener('click', () => {
     if (button.dataset.action === 'directions') renderDirectionsForm();
     else if (button.dataset.action === 'shared') void renderCollections();
-    else setIntegrationContent('<div class="integration-heading"><div><h2>Saved places</h2><p>Saved-place storage exists, but its authenticated API/UI workflow is not implemented yet.</p></div></div>');
+    else void renderSavedPlaces();
   });
 });
 
@@ -635,7 +812,7 @@ document.querySelectorAll<HTMLButtonElement>('.nav-item').forEach((item) => {
     });
     if (item.dataset.panel === 'explore') renderExplore();
     else if (item.dataset.panel === 'shared') void renderCollections();
-    else setIntegrationContent('<div class="integration-heading"><div><h2>Saved places</h2><p>The saved-place API/UI milestone remains pending.</p></div></div>');
+    else void renderSavedPlaces();
   });
 });
 
