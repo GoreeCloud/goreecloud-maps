@@ -1,0 +1,145 @@
+schema_version: "0.2"
+
+component:
+  type: application
+  id: maps
+  product_name: GoreeCloud Maps
+  repository: GoreeCloud/goreecloud-maps
+
+lifecycle: development
+version: 0.1.0-dev.0
+
+supported_platforms:
+  - web
+
+api:
+  versions:
+    - v1
+  endpoints:
+    - name: maps-api
+      url: /api/v1
+      purpose: Authenticated Maps application API for place search, routing, saved places, collections, and collaboration foundations.
+
+platform_systems:
+  manager:
+    result: applicable-blocked
+    version: null
+    evidence: []
+    notes: Manager operational visibility and acceptance are not implemented or accepted for Maps.
+  privacy_shield:
+    result: applicable-blocked
+    version: null
+    evidence:
+      - README.md
+      - SPECIFICATIONS.md
+    notes: Privacy boundaries are documented and owner-scoped source controls exist, but Privacy Shield runtime integration and acceptance remain incomplete.
+  wardveil_security:
+    result: applicable-blocked
+    version: null
+    evidence:
+      - README.md
+      - SPECIFICATIONS.md
+    notes: Security boundaries and source controls exist, but Wardveil Security runtime integration and acceptance remain incomplete.
+  everkeep:
+    result: applicable-blocked
+    version: null
+    evidence:
+      - SPECIFICATIONS.md
+    notes: Backup, restore, and recovery requirements are documented but Everkeep integration and restore acceptance remain incomplete.
+  glaze_ui:
+    result: applicable-migration-required
+    version: "2.0.0"
+    evidence:
+      - README.md
+      - SPECIFICATIONS.md
+      - apps/web/src/styles.css
+    notes: Current repository source still labels the superseded 2.0.0 target. It must be reconciled to the authoritative GLAZE UI V1.1 / 1.1.0 consumer baseline and complete application-specific acceptance.
+  mesh:
+    result: applicable-blocked
+    version: null
+    evidence:
+      - README.md
+      - SPECIFICATIONS.md
+    notes: Maps interoperability boundaries are documented, but accepted Mesh registration, runtime coordination, and evidence delivery are not implemented.
+    capabilities: []
+    dependencies:
+      - goreecloud-location
+      - goreecloud-identity
+    published_events: []
+    consumed_events: []
+  identity:
+    result: applicable-blocked
+    version: null
+    evidence:
+      - docs/IDENTITY.md
+      - apps/web/src/auth.ts
+    notes: Authorization Code plus PKCE and API bearer-token source boundaries exist, but production GoreeCloud Identity registration, runtime integration, and acceptance remain incomplete.
+
+health:
+  health_endpoint: /healthz
+  readiness_endpoint: /readyz
+
+continuity:
+  backup:
+    required: true
+    requirements:
+      - Back up user-owned saved places, collections, collaboration state, preferences, and other durable Maps data through an accepted Everkeep scope.
+  restore:
+    required: true
+    requirements:
+      - Validate restoration of durable Maps state into a clean environment before Stable acceptance.
+  export:
+    required: true
+    requirements:
+      - Provide documented user-controlled export for durable user-owned Maps data before Stable acceptance.
+  portability:
+    required: true
+    requirements:
+      - Preserve user-owned Maps data in documented portable formats and avoid provider lock-in where practical.
+
+external_dependencies:
+  - name: PostgreSQL with PostGIS
+    purpose: Durable multi-user spatial storage and row-level authorization enforcement for Maps private state.
+    required: true
+    version_constraint: ">=16"
+  - name: MapLibre GL JS
+    purpose: Web map rendering engine behind the GoreeCloud Maps presentation boundary.
+    required: true
+    version_constraint: "6.6.0"
+  - name: Approved geographic data release service
+    purpose: Versioned basemap style, tile, glyph, and sprite delivery when live map data is configured.
+    required: false
+  - name: Approved geocoding provider
+    purpose: Forward and reverse geocoding through the GoreeCloud provider adapter when configured.
+    required: false
+  - name: Approved routing provider
+    purpose: Route calculation through the GoreeCloud provider adapter when configured.
+    required: false
+
+compatibility:
+  platform_contract: "0.2"
+  glaze_ui_required: "1.1.0"
+  requires:
+    - goreecloud-platform-contract==0.2
+    - glaze-ui==1.1.0
+  provides:
+    - maps-api-v1
+
+evidence:
+  acceptance_tests: []
+  release: []
+
+conformance:
+  status: nonconformant
+  validated_at: null
+  evidence: []
+  blockers:
+    - GLAZE UI V1.1 / 1.1.0 source reconciliation and application-specific rendered, accessibility, responsive, and form-factor acceptance remain incomplete.
+    - GoreeCloud Manager integration and acceptance remain incomplete.
+    - Privacy Shield runtime integration and acceptance remain incomplete.
+    - Wardveil Security runtime integration and acceptance remain incomplete.
+    - Everkeep backup and restore integration and acceptance remain incomplete.
+    - GoreeCloud Mesh registration, runtime coordination, and acceptance remain incomplete.
+    - GoreeCloud Identity production registration, runtime integration, and acceptance remain incomplete.
+    - Approved live geographic data, geocoding, and routing deployment and quality acceptance remain incomplete.
+    - Required Stable acceptance-test, release, rollback, deployment, and production evidence has not been produced.
