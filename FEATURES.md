@@ -7,7 +7,7 @@ Status vocabulary: **Implemented**, **In progress**, **Planned**, or **Blocked b
 | Feature | Status | Notes |
 |---|---|---|
 | Original GoreeCloud application model | Implemented | Repository and architecture prohibit a complete third-party application fork. |
-| Glaze UI 2.0.0 target | In progress | Web shell applies the current material/layout/accessibility contract; product-specific rendered acceptance remains required. |
+| GLAZE UI V1.1 (`1.1.0`) target | In progress | The web shell now has a repository-local current-Stable reconciliation layer with Deep Teal + Soft Amber atmosphere, Light/Dark/Deep Dark structure, 48px targets, focus treatment, nested-blur clamping, and reduced-effects fallbacks; exact-revision rendered/accessibility/form-factor acceptance remains required. |
 | Replaceable geospatial providers | In progress | Map-data/style seams plus Nominatim-compatible geocoding and Valhalla-compatible routing adapters are implemented; live provider deployment and acceptance remain pending. |
 | Multi-user tenancy model | In progress | Identity-subject mapping, owner/member roles, RLS policies, collaboration APIs, runtime-role fail-closed checks, and automated PostGIS isolation acceptance are implemented; production Identity/database and broader UI acceptance remain pending. |
 | Browser OIDC public-client integration | In progress | Authorization Code + PKCE source integration exists with no browser secret and in-memory bearer token handling; actual Maps client registration and end-to-end Identity acceptance remain pending. |
@@ -63,7 +63,7 @@ The public geographic-data plane is deliberately separate from private Maps stat
 | Place correction/feedback workflow | Planned |
 | Search integration with GoreeCloud Search | Planned |
 
-Forward and reverse geocoding have authenticated Maps API routes and a normalized Nominatim-compatible provider adapter. The web search form and category chips now call the same-origin Maps API after authentication, render normalized results, and can move the map/marker to a selected result. No live geocoder endpoint is configured or production-accepted, category behavior is currently ordinary text geocoding rather than a dedicated nearby/POI ranking contract, and GoreeCloud Search interoperability remains pending. Saved-place storage exists; saved-place API/UI workflows remain pending.
+Forward and reverse geocoding have authenticated Maps API routes and a normalized Nominatim-compatible provider adapter. The web search form and category chips call the same-origin Maps API after authentication, render normalized results, and can move the map/marker to a selected result. The current stacked Development source also provides explicit owner-scoped Saved Places presentation and Save actions for rendered search results using the existing authenticated Maps API. No live geocoder endpoint is configured or production-accepted, category behavior remains ordinary text geocoding rather than a dedicated nearby/POI ranking contract, and GoreeCloud Search interoperability remains pending.
 
 ## Directions and navigation
 
@@ -182,8 +182,10 @@ The repository defines how an accepted public map-data release must record attri
 | Privacy Shield | Planned |
 | Wardveil Security | Planned |
 | Everkeep | Planned |
-| Glaze UI 2.0.0 | In progress |
+| GLAZE UI V1.1 (`1.1.0`) | In progress |
+
+The current GLAZE UI migration is a web source reconciliation only. It does not establish product-specific rendered/native accessibility, performance, form-factor, or Stable acceptance, and it does not change the authority or lifecycle of any other platform integration.
 
 ## Form factors
 
-The responsive web shell currently covers initial mobile and desktop composition work. Native mobile, tablet, foldable, desktop, TV, wearable, and spatial acceptance remain planned and must satisfy the applicable Glaze UI contract and platform-specific evidence requirements. Responsive web behavior alone does not constitute native or form-factor acceptance.
+The responsive web shell currently covers initial mobile and desktop composition work. Native mobile, tablet, foldable, desktop, TV, wearable, and spatial acceptance remain planned and must satisfy the applicable current Stable GLAZE UI contract and platform-specific evidence requirements. Responsive web behavior alone does not constitute native or form-factor acceptance.
