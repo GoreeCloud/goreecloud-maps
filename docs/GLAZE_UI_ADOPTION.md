@@ -13,6 +13,12 @@ Development source migration only. This document does not establish downstream c
 - Optical contract: `contracts/v1.1/optical-refinement.json`
 - Atmosphere tokens: `tokens/glaze-v1.1-atmosphere.json`
 
+## Known Stable-line blocker
+
+The published `1.1.0` source remains the current Stable consumer target, but it has a known V1.1 CSS import-closure defect. The governed corrective line is GLAZE UI PR #129 / `1.1.1-rc.1`; that correction is still a Release Candidate with `consumerEligible: false` and is not a corrected immutable Stable release.
+
+Maps may retain this bounded Development source mapping for review, but this `1.1.0` pin must not be used to claim current GLAZE UI conformance, release eligibility, geographic-provider acceptance, deployment acceptance, or production approval. After a corrected immutable Stable release is published, Maps must explicitly re-pin the exact version and revision and repeat all applicable source, rendered map/chrome, accessibility, representative-browser/device/GPU, deployment, and production acceptance.
+
 ## Web mapping
 
 Maps keeps the live geographic renderer as the durable working canvas and confines Glaze treatment to bounded application chrome such as search, account, map controls, sheets, cards, directions controls, and transient feedback.
