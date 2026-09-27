@@ -1,0 +1,14 @@
+/*
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: no-referrer
+  X-Frame-Options: DENY
+  Permissions-Policy: camera=(), microphone=(), payment=(), usb=(), geolocation=(self)
+
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/map-style.json
+  Cache-Control: no-cache
+
+/index.html
+  Cache-Control: no-cache
