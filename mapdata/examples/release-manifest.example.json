@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "releaseId": "example-release",
+  "generatedAt": "2026-08-29T00:00:00Z",
+  "stylePath": "releases/example-release/style.json",
+  "tileTemplate": "releases/example-release/tiles/{z}/{x}/{y}.pbf",
+  "minZoom": 0,
+  "maxZoom": 14,
+  "bounds": [-180, -85, 180, 85],
+  "attribution": [
+    {
+      "text": "Synthetic example fixture — not production map data"
+    }
+  ],
+  "sources": [
+    {
+      "name": "Synthetic example fixture",
+      "datasetVersion": "1",
+      "license": "Test fixture only",
+      "provenance": "Repository-only validation fixture. It contains no geographic dataset."
+    }
+  ],
+  "publicGeographicDataOnly": true
+}
