@@ -1,72 +1,67 @@
-# GoreeCloud Maps — GLAZE UI V1.1 Adoption
+# GoreeCloud Maps — GLAZE UI adoption
 
-## Status
+## Current state
 
-Development source migration only. This document does not establish downstream conformance, Stable qualification, deployment, geographic-provider acceptance, or production approval.
+GoreeCloud Maps is a **Forge-stage Development candidate**. The consolidated web source currently implements the repository-local **GLAZE UI V1.1 / 1.1.0** presentation mapping. The current approved shared consumer target is **GLAZE UI V1.6 / 1.6.0**, so Maps remains `applicable-migration-required`.
 
-## Current authority
+This record does not convert the existing V1.1 bytes into V1.6 by relabeling them. Shared Glaze acceptance is not Maps-specific rendered, accessibility, performance, browser/device, deployment, release, or production acceptance.
 
-- Target: **GLAZE UI V1.1 (`1.1.0`)**
-- Stable tag: `v1.1.0`
-- Stable release revision: `15cc76d2bcd4065552dc31c77145b63f34d9e7b2`
-- Approved visual source: `8ea1f789bbabf943c3359514dc1506b24fa3c51b`
-- Optical contract: `contracts/v1.1/optical-refinement.json`
-- Atmosphere tokens: `tokens/glaze-v1.1-atmosphere.json`
+## Current shared authority
 
-## Known Stable-line blocker
+Live shared authority verified 2026-09-27 from `GoreeCloud/glaze-ui`:
 
-The published `1.1.0` source remains the current Stable consumer target, but it has a known V1.1 CSS import-closure defect. The governed corrective line is GLAZE UI PR #129 / `1.1.1-rc.1`; that correction is still a Release Candidate with `consumerEligible: false` and is not a corrected immutable Stable release.
+- official product: **GLAZE UI V1.6**
+- approved consumer target: `1.6.0`
+- lifecycle: Anchor (the compatibility registry retains `status: stable`)
+- tag: `v1.6.0`
+- source qualification anchor: `c7509c79256b04b0aa67cb9dd0737d7588e0ae4a`
+- accepted release source: `a7180679ea851389e0f3004515f9a25f420e716d`
+- accepted release tree: `9ff0bf7a5f9d64f109d99bf4b76b81bd2a162268`
+- shared web material entrypoint: `css/glaze-v1.4.1.css`
+- shared runtime entrypoint: `js/glaze-v1.6.0.mjs`
+- immediate known-good rollback runtime: `1.5.1`
 
-Maps may retain this bounded Development source mapping for review, but this `1.1.0` pin must not be used to claim current GLAZE UI conformance, release eligibility, geographic-provider acceptance, deployment acceptance, or production approval. After a corrected immutable Stable release is published, Maps must explicitly re-pin the exact version and revision and repeat all applicable source, rendered map/chrome, accessibility, representative-browser/device/GPU, deployment, and production acceptance.
+V1.6 adds current shared runtime/capability behavior while preserving the accepted V1.4.1 web material baseline. Maps must evaluate applicable V1.5/V1.6 runtime behavior rather than treating a CSS filename as the complete design-system contract.
 
-## Web mapping
+## Implemented Maps mapping
 
-Maps keeps the live geographic renderer as the durable working canvas and confines Glaze treatment to bounded application chrome such as search, account, map controls, sheets, cards, directions controls, and transient feedback.
+The current candidate retains its V1.1 source layer because it is real implemented source and historical evidence. It provides:
 
-The repository-local V1.1 reconciliation:
+- neutral-first Deep Teal + Soft Amber product atmosphere;
+- a 48 px interaction-target floor;
+- explicit keyboard focus treatment;
+- Light, Dark, and explicit Deep Dark structural modes;
+- bounded frosted application chrome around the geographic canvas;
+- no nested blur escalation;
+- Reduced Transparency and Reduced Motion fallbacks;
+- forced-colors fallback; and
+- no environmental/geographic-content sampling as a hidden data-collection mechanism.
 
-- replaces the prior blue presentation identity with neutral-first Deep Teal + Soft Amber atmosphere;
-- keeps the default atmosphere to one dominant teal field and one restrained amber counter-light field;
-- preserves the existing 48px interaction-target floor;
-- aligns current container geometry to V1.1 16 / 24 / 32 references while retaining capsule geometry where appropriate;
-- provides explicit keyboard focus treatment;
-- preserves Light and Dark system appearance and adds an explicit Deep Dark structural mode;
-- removes nested backdrop blur when Glaze surfaces are nested rather than escalating effects;
-- falls back to solid raised surfaces under Reduced Transparency;
-- removes nonessential transform/motion under Reduced Motion;
-- removes custom atmospheric fields and defers color handling to the platform under forced-colors;
-- does not require Environmental Color Memory, geographic-content color sampling, or remote color derivation.
+These are implemented source properties, not V1.6 conformance claims.
+
+## V1.6 migration requirements
+
+A substantive Maps migration must map the current shared Glaze contract without weakening map usability, attribution, privacy, or provider independence. At minimum it must:
+
+1. keep the geographic renderer as the durable content canvas and apply Glaze to bounded application surfaces;
+2. integrate applicable V1.6 runtime/capability behavior through a repository-controlled, auditable boundary;
+3. keep provider, route, saved-place, collection, privacy, security, policy, and operational-health authority with their owning systems;
+4. keep raw coordinates, private routes, search context, and provider credentials out of decorative/contextual presentation inputs unless a separately approved purpose explicitly authorizes them;
+5. preserve Reduced Motion, Reduced Transparency, forced-colors, keyboard, screen-reader/list alternative, 200% text/reflow, safe-area, and responsive behavior; and
+6. produce fresh Maps-specific render, accessibility, performance, browser/device/GPU, rollback, and Human Visual Excellence evidence.
 
 ## Maps / Location authority boundary
 
-GLAZE UI is presentation only, and Maps remains separate from GoreeCloud Location.
+GLAZE UI is presentation only. Maps does not become authoritative for current user/device location, background tracking, personal location history, Find My, geofences, or location-sharing permission state. Those remain GoreeCloud Location responsibilities.
 
-This migration does not request device location, read personal Location history, infer a visit, create a second tracking service, or claim authority over:
+Maps remains responsible for map presentation and Maps-owned resources such as geographic search/place metadata, routing presentation, Saved Places, collections, and collaboration where implemented and accepted.
 
-- current user/device location;
-- personal location history;
-- tracking controls;
-- Find My;
-- geofences;
-- location-sharing permission state.
+## Platform Contract boundary
 
-Those remain GoreeCloud Location authority. Maps remains authoritative for map presentation, geographic search/place metadata, routes, Saved Places, collections, and other Maps-owned state where implemented and accepted.
+The current candidate adopts **Platform Contract 2.0** with the canonical nine Integral Platform Systems. It is classified as `forge`, with `blocked` and `migration-required` flags, Development deployment state, and qualification not started.
 
-Atmospheric teal or amber never represents security, privacy, Identity authorization, Wardveil findings, Everkeep continuity, provider acceptance, geographic coverage, or route correctness by itself.
+GoreeCloud Policy and GoreeCloud Observability are explicit applicable-but-blocked systems. GoreeCloud Sync remains separately governed and is not a tenth Integral Platform System.
 
 ## Acceptance still required
 
-Exact Maps revisions still require, as applicable:
-
-- strict web type-check/build evidence;
-- representative rendered map/chrome visual review and Human Visual Excellence acceptance;
-- keyboard and screen-reader accessibility review, including non-map/list alternatives where required;
-- 200% text and responsive reflow;
-- RTL/localization;
-- Reduced Motion and Reduced Transparency acceptance;
-- contrast/high-contrast/forced-colors behavior;
-- mobile/desktop/tablet/foldable/safe-area behavior;
-- representative browser/GPU performance evidence;
-- live approved geographic data/geocoder/router provider evidence;
-- production Identity, Privacy Shield, Wardveil, Everkeep, Mesh and Location integrations where applicable;
-- deployment, rollback, operational recovery, production signing/distribution where applicable, and production approval.
+Before Maps can reach Anchor, the exact candidate must satisfy every applicable build, API/database/RLS, rendered Glaze UI, accessibility, supported-platform, security, privacy, provider, Identity, Policy, Observability, continuity, deployment, rollback, release, and production acceptance gate. Passing source CI or the Platform Contract validator alone does not establish those outcomes.
