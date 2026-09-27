@@ -1,0 +1,222 @@
+/*
+ * GoreeCloud Maps — repository-local GLAZE UI V1.1 presentation mapping.
+ * Target: 1.1.0 / v1.1.0
+ * Stable source: 15cc76d2bcd4065552dc31c77145b63f34d9e7b2
+ * Approved visual source: 8ea1f789bbabf943c3359514dc1506b24fa3c51b
+ *
+ * Presentation only. This file does not request device location or create any
+ * Maps authority over GoreeCloud Location history, tracking, Find My, sharing,
+ * geofences, or location permission state.
+ */
+
+:root {
+  --glaze-color-canvas: #f4f8f9;
+  --glaze-color-surface: rgba(251, 253, 253, 0.92);
+  --glaze-color-surface-raised: rgba(255, 255, 255, 0.97);
+  --glaze-color-text-primary: #101a20;
+  --glaze-color-text-secondary: #5f7078;
+  --glaze-color-border: rgba(16, 26, 32, 0.11);
+  --glaze-color-accent: #0f6b6f;
+  --glaze-color-accent-soft: rgba(15, 107, 111, 0.12);
+  --glaze-color-accent-contrast: #ffffff;
+  --glaze-color-success: #0f6b6f;
+  --glaze-color-amber: #d9a35f;
+  --glaze-color-aqua: #8fd6d2;
+
+  --glaze-shape-small: 8px;
+  --glaze-shape-standard: 16px;
+  --glaze-shape-medium: 24px;
+  --glaze-shape-large: 32px;
+  --glaze-touch-min: 48px;
+}
+
+body {
+  position: relative;
+  isolation: isolate;
+}
+
+/* Restrained V1.1 atmosphere: teal dominant, amber secondary. */
+body::before {
+  position: fixed;
+  z-index: -1;
+  inset: 0;
+  content: "";
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 8% 5%, rgba(15, 107, 111, 0.08), transparent 34%),
+    radial-gradient(circle at 92% 94%, rgba(217, 163, 95, 0.04), transparent 30%);
+}
+
+button,
+input,
+.nav-item,
+.chip,
+.action-tile,
+.directions-button,
+[role="button"],
+[role="switch"] {
+  min-height: var(--glaze-touch-min);
+}
+
+button:focus-visible,
+input:focus-visible,
+a:focus-visible,
+[role="button"]:focus-visible,
+[role="switch"]:focus-visible {
+  outline: 3px solid var(--glaze-color-accent);
+  outline-offset: 3px;
+}
+
+.glaze,
+.glaze--soft,
+.glaze--deep {
+  background: color-mix(in srgb, var(--glaze-color-surface) 78%, transparent);
+  border-color: var(--glaze-color-border);
+  box-shadow:
+    0 16px 46px rgba(16, 26, 32, 0.12),
+    inset 1px 1px rgba(255, 255, 255, 0.34);
+  backdrop-filter: blur(24px) saturate(1.45);
+  -webkit-backdrop-filter: blur(24px) saturate(1.45);
+}
+
+/* V1.1 does not permit default nested backdrop-blur escalation. */
+.glaze .glaze,
+.glaze .glaze--soft,
+.glaze .glaze--deep,
+.glaze--soft .glaze,
+.glaze--soft .glaze--soft,
+.glaze--deep .glaze,
+.glaze--deep .glaze--soft {
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  background: var(--glaze-color-surface-raised);
+}
+
+.surface,
+.surface-raised {
+  border-color: var(--glaze-color-border);
+}
+
+.top-island {
+  border-radius: 999px;
+}
+
+.brand-mark {
+  border-radius: 16px;
+  background: linear-gradient(145deg, #1c8a8d, #0f6b6f);
+  box-shadow: 0 8px 24px rgba(15, 107, 111, 0.18);
+}
+
+.search-control:focus-within {
+  border-color: rgba(15, 107, 111, 0.42);
+  box-shadow: 0 0 0 4px rgba(15, 107, 111, 0.08);
+}
+
+.maplibregl-ctrl-attrib {
+  background: color-mix(in srgb, var(--glaze-color-surface-raised) 90%, transparent) !important;
+}
+
+/* Amber may add restrained counter-light but never carries status by itself. */
+.state-warn,
+.notice-warn,
+[data-tone="warning"] {
+  border-color: rgba(217, 163, 95, 0.28);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --glaze-color-canvas: #101a20;
+    --glaze-color-surface: rgba(24, 37, 43, 0.93);
+    --glaze-color-surface-raised: rgba(24, 37, 43, 0.99);
+    --glaze-color-text-primary: #e7eef0;
+    --glaze-color-text-secondary: #b4c1c6;
+    --glaze-color-border: rgba(231, 238, 240, 0.12);
+    --glaze-color-accent: #8fd6d2;
+    --glaze-color-accent-soft: rgba(143, 214, 210, 0.14);
+    --glaze-color-accent-contrast: #081016;
+    --glaze-color-success: #8fd6d2;
+  }
+
+  body::before {
+    background:
+      radial-gradient(circle at 8% 5%, rgba(15, 107, 111, 0.12), transparent 34%),
+      radial-gradient(circle at 92% 94%, rgba(217, 163, 95, 0.06), transparent 30%);
+  }
+}
+
+html[data-glaze-appearance="deep-dark"] {
+  color-scheme: dark;
+  --glaze-color-canvas: #081016;
+  --glaze-color-surface: rgba(16, 26, 32, 0.94);
+  --glaze-color-surface-raised: #101a20;
+  --glaze-color-text-primary: #e7eef0;
+  --glaze-color-text-secondary: #b4c1c6;
+  --glaze-color-border: rgba(231, 238, 240, 0.12);
+  --glaze-color-accent: #8fd6d2;
+  --glaze-color-accent-soft: rgba(143, 214, 210, 0.14);
+  --glaze-color-accent-contrast: #081016;
+  --glaze-color-success: #8fd6d2;
+}
+
+html[data-glaze-appearance="deep-dark"] body::before {
+  background:
+    radial-gradient(circle at 8% 5%, rgba(15, 107, 111, 0.16), transparent 34%),
+    radial-gradient(circle at 92% 94%, rgba(217, 163, 95, 0.08), transparent 30%);
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .glaze,
+  .glaze--soft,
+  .glaze--deep {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    background: var(--glaze-color-surface-raised);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  .brand-button:active,
+  .account-button:active,
+  .search-clear:active,
+  .map-controls button:active,
+  .locate-control:active,
+  .nav-item:active,
+  .chip:active,
+  .action-tile:active,
+  .directions-button:active {
+    transform: none;
+  }
+}
+
+@media (forced-colors: active) {
+  body::before {
+    display: none;
+  }
+
+  .glaze,
+  .glaze--soft,
+  .glaze--deep {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+
+  button,
+  input,
+  .nav-item,
+  .chip,
+  .action-tile,
+  .surface,
+  .surface-raised,
+  .glaze {
+    forced-color-adjust: auto;
+  }
+}
