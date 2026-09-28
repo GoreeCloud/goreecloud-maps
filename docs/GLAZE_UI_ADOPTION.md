@@ -2,9 +2,9 @@
 
 ## Current state
 
-GoreeCloud Maps is a **Forge-stage Development candidate**. The consolidated web source now implements a repository-local **GLAZE UI V1.6 / 1.6.0** presentation adapter against the current approved shared target. Glaze is now `applicable-blocked`: source migration is present, but Maps-specific rendered and runtime acceptance is not complete.
+GoreeCloud Maps is a **Forge-stage Development candidate**. The consolidated web source currently implements the repository-local **GLAZE UI V1.1 / 1.1.0** presentation mapping. The current approved shared consumer target is **GLAZE UI V1.6 / 1.6.0**, so Maps remains `applicable-migration-required`.
 
-The V1.6 adapter is a substantive repository-local source change, not a version-label-only rewrite. It avoids a remote browser runtime dependency, preserves caller-owned provider/application truth, and adds V1.6 semantic-surface, accessibility-profile, input-mode, motion, and constrained-performance behavior. Shared Glaze acceptance still does not equal Maps-specific rendered, accessibility, performance, browser/device, deployment, release, or production acceptance.
+This record does not convert the existing V1.1 bytes into V1.6 by relabeling them. Shared Glaze acceptance is not Maps-specific rendered, accessibility, performance, browser/device, deployment, release, or production acceptance.
 
 ## Current shared authority
 
@@ -23,9 +23,9 @@ Live shared authority verified 2026-09-27 from `GoreeCloud/glaze-ui`:
 
 V1.6 adds current shared runtime/capability behavior while preserving the accepted V1.4.1 web material baseline. Maps must evaluate applicable V1.5/V1.6 runtime behavior rather than treating a CSS filename as the complete design-system contract.
 
-## Implemented Maps V1.6 mapping
+## Implemented Maps mapping
 
-The active candidate now uses `apps/web/src/glaze-v1-6.ts` and `apps/web/src/glaze-v1-6.css`. The older V1.1 source remains inactive historical provenance. The active V1.6 mapping provides:
+The current candidate retains its V1.1 source layer because it is real implemented source and historical evidence. It provides:
 
 - neutral-first Deep Teal + Soft Amber product atmosphere;
 - a 48 px interaction-target floor;
@@ -37,11 +37,11 @@ The active candidate now uses `apps/web/src/glaze-v1-6.ts` and `apps/web/src/gla
 - forced-colors fallback; and
 - no environmental/geographic-content sampling as a hidden data-collection mechanism.
 
-These are implemented source properties. They establish a current-target source mapping, not application-specific rendered or production conformance.
+These are implemented source properties, not V1.6 conformance claims.
 
-## V1.6 acceptance requirements
+## V1.6 migration requirements
 
-The source migration now maps the current shared Glaze contract without weakening map usability, attribution, privacy, or provider independence. Remaining acceptance must verify that it:
+A substantive Maps migration must map the current shared Glaze contract without weakening map usability, attribution, privacy, or provider independence. At minimum it must:
 
 1. keep the geographic renderer as the durable content canvas and apply Glaze to bounded application surfaces;
 2. integrate applicable V1.6 runtime/capability behavior through a repository-controlled, auditable boundary;
@@ -58,7 +58,7 @@ Maps remains responsible for map presentation and Maps-owned resources such as g
 
 ## Platform Contract boundary
 
-The current candidate adopts **Platform Contract 2.0** with the canonical nine Integral Platform Systems. It is classified as `forge`, with a `blocked` flag, Development deployment state, and qualification not started. Glaze source is current-target V1.6, while downstream acceptance remains blocked.
+The current candidate adopts **Platform Contract 2.0** with the canonical nine Integral Platform Systems. It is classified as `forge`, with `blocked` and `migration-required` flags, Development deployment state, and qualification not started.
 
 GoreeCloud Policy and GoreeCloud Observability are explicit applicable-but-blocked systems. GoreeCloud Sync remains separately governed and is not a tenth Integral Platform System.
 
