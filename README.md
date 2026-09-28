@@ -50,7 +50,7 @@ A fresh development build must not silently fall back to an unrelated public map
 
 Platform Contract 2.0 evaluates exactly nine Integral Platform Systems: GoreeCloud Manager, Privacy Shield, Wardveil Security, Everkeep, Glaze UI, GoreeCloud Mesh, GoreeCloud Identity, GoreeCloud Policy, and GoreeCloud Observability.
 
-The web candidate currently implements the repository-local GLAZE UI V1.1 / 1.1.0 presentation mapping. The approved shared target is GLAZE UI V1.6 / 1.6.0, so Maps remains migration-required. The V1.1 source already provides bounded frosted chrome, a 48 px target floor, visible focus, Light/Dark/Deep Dark structure, reduced-effects fallbacks, and forced-colors handling; a substantive V1.6 migration plus fresh Maps-specific rendered, accessibility, adaptive, performance, browser/device/GPU, rollback, and Human Visual Excellence acceptance remains blocked.
+The web candidate now activates a repository-local GLAZE UI V1.6 / 1.6.0 presentation adapter pinned to the current shared V1.6 qualification and accepted-release anchors. Source migration is implemented; fresh Maps-specific rendered, accessibility, adaptive, performance, browser/device/GPU, rollback, Human Visual Excellence, release, and production acceptance remains blocked.
 
 GoreeCloud Sync remains separately governed and is not a tenth Integral Platform System.
 
