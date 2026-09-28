@@ -18,6 +18,12 @@
   margin-bottom: 0.8rem;
 }
 
+.integration-heading h2[tabindex='-1']:focus {
+  outline: 3px solid var(--glaze-color-accent);
+  outline-offset: 4px;
+  border-radius: 0.25rem;
+}
+
 .integration-heading h2,
 .integration-heading p,
 .result-card p,
