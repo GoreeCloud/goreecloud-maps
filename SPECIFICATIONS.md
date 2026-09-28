@@ -2,7 +2,7 @@
 
 ## 1. Status and authority
 
-GoreeCloud Maps is in **Development**. The authoritative product/project record is `GoreeCloud/Projects/Project Specification — Maps`; this repository record is the code-adjacent implementation/governance companion and must remain consistent with that authority.
+GoreeCloud Maps is **Forge / Development**. `PROJECT-SPECIFICATIONS.md` is the canonical project specification once accepted on `main`; this `SPECIFICATIONS.md` file is the implementation-focused code-adjacent companion and must remain consistent with that authority. `PROJECT-RECORD.md` preserves significant project history.
 
 Authoritative `main` remains the accepted governance/licensing/branding baseline until the current stabilization candidate passes review and protected promotion.
 
