@@ -64,13 +64,14 @@ platform_systems:
       - SPECIFICATIONS.md
     notes: Saved places and collections require continuity, but accepted Everkeep backup, clean-environment restore, export, portability, rollback, and recovery evidence remain incomplete.
   glaze_ui:
-    result: applicable-migration-required
-    version: "1.1.0"
+    result: applicable-blocked
+    version: "1.6.0"
     evidence:
-      - apps/web/src/glaze-v1-1.css
-      - apps/web/src/glaze-v1-1.ts
+      - apps/web/src/main.ts
+      - apps/web/src/glaze-v1-6.css
+      - apps/web/src/glaze-v1-6.ts
       - docs/GLAZE_UI_ADOPTION.md
-    notes: The consolidated Maps candidate truthfully retains its implemented GLAZE UI V1.1 source mapping. The current approved shared target is GLAZE UI V1.6 / 1.6.0, so a substantive downstream migration plus rendered, accessibility, adaptive, performance, and representative-device acceptance is still required.
+    notes: The Maps candidate now activates a repository-local GLAZE UI V1.6 / 1.6.0 presentation adapter pinned to the current shared V1.6 qualification and accepted-release anchors. Source migration is implemented, but Maps-specific rendered, accessibility, adaptive, performance, representative-browser/device/GPU, rollback, Human Visual Excellence, release, and production acceptance remain incomplete.
   mesh:
     result: applicable-blocked
     version: null
@@ -178,7 +179,7 @@ conformance:
     - docs/GLAZE_UI_ADOPTION.md
   blockers:
     - The executable Maps foundation and stacked Saved Places/search-save work remain a review candidate and are not authoritative main behavior until protected promotion completes.
-    - GLAZE UI V1.1 / 1.1.0 remains the implemented source mapping while current approved target is V1.6 / 1.6.0; substantive migration and fresh Maps-specific rendered, accessibility, adaptive, performance, rollback, and Human Visual Excellence acceptance remain incomplete.
+    - GLAZE UI V1.6 / 1.6.0 source migration is implemented, but fresh Maps-specific rendered, accessibility, adaptive, performance, representative-browser/device/GPU, rollback, Human Visual Excellence, release, and production acceptance remain incomplete.
     - GoreeCloud Manager integration and acceptance remain incomplete.
     - Privacy Shield runtime decisions, minimization/retention/sharing evidence, and production privacy acceptance remain incomplete.
     - Wardveil Security runtime evidence, abuse controls, provider egress controls, and production security acceptance remain incomplete.
