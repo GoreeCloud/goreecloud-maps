@@ -164,10 +164,45 @@ const showToast = (message: string): void => {
   }, 3600);
 };
 
-const setIntegrationContent = (content: string): void => {
-  document.querySelectorAll<HTMLElement>('[data-integration-host]').forEach((host) => {
-    host.innerHTML = `<section class="integration-panel surface-raised" data-glaze-semantic-surface="protected">${content}</section>`;
+type IntegrationRenderOptions = {
+  focusHeading?: boolean;
+};
+
+const integrationHosts = (): HTMLElement[] =>
+  Array.from(document.querySelectorAll<HTMLElement>('[data-integration-host]'));
+
+const focusVisibleIntegrationHeading = (): void => {
+  window.requestAnimationFrame(() => {
+    const hosts = integrationHosts();
+    const visibleHost = hosts.find((host) => host.getClientRects().length > 0) ?? hosts[0];
+    visibleHost?.querySelector<HTMLElement>('.integration-heading h2')?.focus();
   });
+};
+
+const setIntegrationContent = (
+  content: string,
+  options: IntegrationRenderOptions = {},
+): void => {
+  const hosts = integrationHosts();
+  const activeElement = document.activeElement;
+  const activeWasInsideIntegration =
+    activeElement instanceof Node && hosts.some((host) => host.contains(activeElement));
+
+  hosts.forEach((host, index) => {
+    host.innerHTML = `<section class="integration-panel surface-raised" data-glaze-semantic-surface="protected" role="region" aria-live="polite" aria-atomic="false">${content}</section>`;
+    const panel = host.querySelector<HTMLElement>('.integration-panel');
+    const heading = host.querySelector<HTMLElement>('.integration-heading h2');
+    if (panel && heading) {
+      const headingId = `maps-integration-heading-${index}`;
+      heading.id = headingId;
+      heading.tabIndex = -1;
+      panel.setAttribute('aria-labelledby', headingId);
+    }
+  });
+
+  if (options.focusHeading || activeWasInsideIntegration) {
+    focusVisibleIntegrationHeading();
+  }
 };
 
 const mapDataStatusLabel = (): string => {
@@ -185,7 +220,7 @@ const mapDataStatusLabel = (): string => {
   }
 };
 
-const renderExplore = (): void => {
+const renderExplore = (focusHeading = false): void => {
   setIntegrationContent(`
     <div class="integration-heading">
       <div>
@@ -199,7 +234,7 @@ const renderExplore = (): void => {
       <span class="status-pill">Routing: ${capabilities.routing ? 'configured' : 'unavailable'}</span>
       <span class="status-pill">Identity: ${identity.configured ? (identity.authenticated ? 'signed in' : 'available') : 'not registered'}</span>
     </div>
-  `);
+  `, { focusHeading });
 };
 
 const renderSignInRequired = (purpose: string): void => {
@@ -213,7 +248,7 @@ const renderSignInRequired = (purpose: string): void => {
         : 'This build has no GoreeCloud Identity issuer/client registration configured. No fallback account system is used.'
     }</p>
     ${identity.configured ? '<div class="integration-actions"><button class="integration-button primary" type="button" data-sign-in>Sign in</button></div>' : ''}
-  `);
+  `, { focusHeading: true });
   document.querySelectorAll<HTMLButtonElement>('[data-sign-in]').forEach((button) => {
     button.addEventListener('click', () => void startSignIn());
   });
@@ -359,7 +394,7 @@ const performSearch = async (query: string): Promise<void> => {
     return;
   }
   if (!requireAuthentication('Sign in to search live place data through the configured Maps geocoder.')) return;
-  setIntegrationContent(`<div class="integration-heading"><div><h2>Searching…</h2><p>Looking for “${escapeHTML(query)}”.</p></div></div>`);
+  setIntegrationContent(`<div class="integration-heading"><div><h2>Searching…</h2><p>Looking for “${escapeHTML(query)}”.</p></div></div>`, { focusHeading: true });
   try {
     renderSearchResults(query, await api.search(query));
   } catch (error) {
@@ -467,7 +502,7 @@ const calculateDirections = async (form: HTMLFormElement): Promise<void> => {
 
 function renderDirectionsForm(): void {
   if (!capabilities.geocoding || !capabilities.routing) {
-    setIntegrationContent(`<div class="integration-heading"><div><h2>Directions unavailable</h2><p>${!apiReachable ? 'The Maps API is unavailable.' : 'Directions require both an approved geocoder and routing provider configuration.'}</p></div></div>`);
+    setIntegrationContent(`<div class="integration-heading"><div><h2>Directions unavailable</h2><p>${!apiReachable ? 'The Maps API is unavailable.' : 'Directions require both an approved geocoder and routing provider configuration.'}</p></div></div>`, { focusHeading: true });
     return;
   }
   if (!requireAuthentication('Sign in to resolve route endpoints and request a route.')) return;
@@ -479,7 +514,7 @@ function renderDirectionsForm(): void {
       <label>Travel mode<select name="mode"><option value="drive">Drive</option><option value="walk">Walk</option><option value="bicycle">Bicycle</option><option value="transit">Transit / multimodal</option></select></label>
       <div class="integration-actions"><button class="integration-button primary" type="submit">Get route</button></div>
     </form>
-  `);
+  `, { focusHeading: true });
   document.querySelectorAll<HTMLFormElement>('[data-direction-form]').forEach((form) => {
     form.addEventListener('submit', (event) => {
       event.preventDefault();
@@ -513,7 +548,7 @@ const renderCollectionItems = async (collection: Collection): Promise<void> => {
 
 const renderCollections = async (): Promise<void> => {
   if (!requireAuthentication('Sign in to load and create Maps collections.')) return;
-  setIntegrationContent('<div class="integration-heading"><div><h2>Shared collections</h2><p>Loading your authorized collections…</p></div></div>');
+  setIntegrationContent('<div class="integration-heading"><div><h2>Shared collections</h2><p>Loading your authorized collections…</p></div></div>', { focusHeading: true });
   try {
     const collections = await api.listCollections();
     setIntegrationContent(`
@@ -655,7 +690,7 @@ const renderSavedPlaces = async (): Promise<void> => {
     return;
   }
   if (!requireAuthentication('Sign in to manage your private saved places.')) return;
-  setIntegrationContent('<div class="integration-heading"><div><h2>Saved places</h2><p>Loading your private saved places…</p></div></div>');
+  setIntegrationContent('<div class="integration-heading"><div><h2>Saved places</h2><p>Loading your private saved places…</p></div></div>', { focusHeading: true });
   try {
     const places = await api.listSavedPlaces();
     const center = map.getCenter();
@@ -810,7 +845,7 @@ document.querySelectorAll<HTMLButtonElement>('.nav-item').forEach((item) => {
       if (selected) candidate.setAttribute('aria-current', 'page');
       else candidate.removeAttribute('aria-current');
     });
-    if (item.dataset.panel === 'explore') renderExplore();
+    if (item.dataset.panel === 'explore') renderExplore(true);
     else if (item.dataset.panel === 'shared') void renderCollections();
     else void renderSavedPlaces();
   });
