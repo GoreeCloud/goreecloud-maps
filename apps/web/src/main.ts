@@ -502,7 +502,7 @@ const calculateDirections = async (form: HTMLFormElement): Promise<void> => {
 
 function renderDirectionsForm(): void {
   if (!capabilities.geocoding || !capabilities.routing) {
-    setIntegrationContent(`<div class="integration-heading"><div><h2>Directions unavailable</h2><p>${!apiReachable ? 'The Maps API is unavailable.' : 'Directions require both an approved geocoder and routing provider configuration.'}</p></div></div>`);
+    setIntegrationContent(`<div class="integration-heading"><div><h2>Directions unavailable</h2><p>${!apiReachable ? 'The Maps API is unavailable.' : 'Directions require both an approved geocoder and routing provider configuration.'}</p></div></div>`, { focusHeading: true });
     return;
   }
   if (!requireAuthentication('Sign in to resolve route endpoints and request a route.')) return;
@@ -514,7 +514,7 @@ function renderDirectionsForm(): void {
       <label>Travel mode<select name="mode"><option value="drive">Drive</option><option value="walk">Walk</option><option value="bicycle">Bicycle</option><option value="transit">Transit / multimodal</option></select></label>
       <div class="integration-actions"><button class="integration-button primary" type="submit">Get route</button></div>
     </form>
-  `);
+  `, { focusHeading: true });
   document.querySelectorAll<HTMLFormElement>('[data-direction-form]').forEach((form) => {
     form.addEventListener('submit', (event) => {
       event.preventDefault();
