@@ -4,9 +4,9 @@
 
 GoreeCloud Maps is in **Development**. The authoritative product/project record is `GoreeCloud/Projects/Project Specification — Maps`; this repository record is the code-adjacent implementation/governance companion and must remain consistent with that authority.
 
-Accepted `main` currently contains governance, licensing, and approved branding, not the executable Maps application foundation. Draft PR #1 (`agent/maps-foundation`) contains the validated executable candidate at `a8aafba65b89dbcd76661368a605762871abbb35`, with CI run `33251905892` successful. PR #1 is still unmerged because its independent-review gate remains outstanding.
+Authoritative `main` remains the accepted governance/licensing/branding baseline until the current stabilization candidate passes review and protected promotion.
 
-No capability that exists only in PR #1 may be described as accepted `main`, production, released, or Stable behavior.
+The current clean stabilization candidate is layered from current `main` and consolidates the previously stacked executable foundation, Saved Places, search-save, Glaze, and governance work. Candidate capabilities must not be described as accepted `main`, production, released, or Anchor behavior until promotion and all applicable acceptance gates complete.
 
 ## 2. Product purpose
 
@@ -36,7 +36,7 @@ GoreeCloud Identity authenticates principals, while Maps remains responsible for
 
 The accepted architecture direction is provider-replaceable and first-party-state oriented.
 
-The validated PR #1 candidate currently demonstrates, but `main` does not yet accept:
+The current stabilization candidate demonstrates, but authoritative `main` does not yet accept:
 
 - TypeScript/Vite/MapLibre GL JS web client;
 - Go application API;
@@ -50,7 +50,7 @@ The validated PR #1 candidate currently demonstrates, but `main` does not yet ac
 - versioned public geographic-data releases and a read-only edge delivery boundary;
 - owner-scoped Saved Places and shared collection primitives.
 
-Those candidate capabilities are source evidence only until the independent-review and merge gates are satisfied.
+Those candidate capabilities are source evidence only until independent review and protected-promotion gates are satisfied.
 
 ## 5. Data and provider requirements
 
@@ -98,21 +98,25 @@ Required principles include:
 
 ## 8. GoreeCloud platform requirements
 
-Stable qualification requires current accepted, substantive integration with the applicable GoreeCloud platform systems:
+Anchor qualification under Platform Contract 2.0 requires current accepted, substantive integration with exactly nine Integral Platform Systems:
 
-- **Glaze UI** — presentation, interaction, accessibility, adaptive layout/form-factor contracts, semantic material/effect behavior, and resilience modes.
-- **Privacy Shield** — privacy-control, data-use, minimization, consent/permission, and truthful privacy-state contracts.
-- **Wardveil Security** — evidence-backed security, protection, trust, abuse resistance, and response-state contracts.
-- **Everkeep** — backup, recovery, preservation, portability, continuity, and deletion/export semantics for eligible user-owned Maps data.
-- **GoreeCloud Mesh** — governed interoperability and capability coordination where platform architecture requires it.
-- **GoreeCloud Identity** — authentication/principal identity without transferring Maps resource authorization.
-- **GoreeCloud Location** — sensitive device/current-location capabilities without Maps creating a competing tracking/history authority.
+- **GoreeCloud Manager** — lifecycle, administration, inventory, operational control, approvals, remediation, and management-plane visibility.
+- **Privacy Shield** — purpose, minimization, consent/permission, retention, sharing, tracking privacy, and truthful privacy state.
+- **Wardveil Security** — security, trust, abuse resistance, threat handling, response, and evidence.
+- **Everkeep** — backup, restore, recovery, preservation, portability, migration readiness, and continuity.
+- **Glaze UI** — presentation, interaction, accessibility, adaptive behavior, and evidence-state presentation.
+- **GoreeCloud Mesh** — governed first-party discovery, dependency awareness, coordination, events, and evidence routing.
+- **GoreeCloud Identity** — authentication and principal identity without transferring Maps resource authorization.
+- **GoreeCloud Policy** — governed policy representation, evaluation, decisions, enforcement coordination, explanation, freshness, and evidence.
+- **GoreeCloud Observability** — health, metrics, logs/events/traces, diagnostics, dependency health, correlation, freshness, and operational evidence.
 
-Decorative names, badges, or artwork do not satisfy integration requirements.
+GoreeCloud Sync remains separately governed and is not a tenth Integral Platform System. GoreeCloud Location remains an application/service dependency for sensitive current-position behavior, not an Integral Platform System.
+
+Decorative names, badges, metadata, or artwork do not satisfy integration requirements.
 
 ## 9. Glaze UI and form-factor requirements
 
-The current authoritative Maps documentation targets Glaze UI 2.0.0 Stable for the foundation candidate. Any later Glaze UI migration must be an explicit, reviewed Maps consumer change rather than an assumed version bump.
+The implemented stabilization source retains its repository-local GLAZE UI V1.1 / 1.1.0 presentation mapping. The current approved shared consumer target is GLAZE UI V1.6 / 1.6.0. Maps therefore remains migration-required; the V1.1 bytes must not be relabeled as V1.6 without a substantive reviewed migration and fresh application-specific evidence.
 
 The map is the primary Canvas. Search, inspectors, place cards, navigation controls, sheets, toolbars, and account controls must use appropriate semantic surfaces/material roles rather than indiscriminate transparency.
 
@@ -134,22 +138,23 @@ The repository currently carries GNU Affero General Public License version 3 mat
 
 Third-party dependencies, datasets, imagery, transit feeds, map providers, geographic sources, fonts, and other incorporated material retain their own licenses/notices. Maps release readiness requires applicable licensing and attribution evidence; the repository AGPL license does not relicense third-party map/data content.
 
-## 12. Stable and production-readiness gates
+## 12. Anchor and production-readiness gates
 
-Maps remains Development until all applicable gates are satisfied together, including:
+Maps remains Forge/Development until all applicable gates are satisfied together, including:
 
-- executable foundation accepted through required review/merge governance;
-- exact-release CI;
+- executable candidate accepted through required review/protected promotion;
+- exact-head CI and current Platform Contract 2.0 validation;
+- substantive GLAZE UI V1.6 migration plus rendered/accessibility/adaptive/performance acceptance;
 - approved live geographic data and provider contracts;
 - licensing/provenance/attribution verification;
 - production database and authorization/RLS acceptance;
 - production GoreeCloud Identity acceptance;
 - GoreeCloud Location acceptance where used;
-- substantive current Privacy Shield, Wardveil Security, Everkeep, Mesh, and Glaze UI integration evidence;
-- accessibility and representative form-factor/device acceptance;
+- substantive Manager, Privacy Shield, Wardveil Security, Everkeep, Mesh, Policy, and Observability integration evidence;
+- accessibility and representative form-factor/device/browser/GPU acceptance;
 - privacy/security review;
 - monitoring, incident, backup/restore, disaster-recovery, and rollback procedures;
 - deployment validation;
-- explicit release and Stable-promotion authorization.
+- explicit release and Anchor authorization.
 
 A green candidate CI run, branding completion, governance documentation, or technical provider compatibility does not independently satisfy these gates.
