@@ -35,7 +35,7 @@ body {
   isolation: isolate;
 }
 
-/* Restrained V1.1 atmosphere: teal dominant, amber secondary. */
+/* Restrained Maps atmosphere retained under the V1.6 consumer mapping: teal dominant, amber secondary. */
 body::before {
   position: fixed;
   z-index: -1;
@@ -79,7 +79,7 @@ a:focus-visible,
   -webkit-backdrop-filter: blur(24px) saturate(1.45);
 }
 
-/* V1.1 does not permit default nested backdrop-blur escalation. */
+/* Keep nested backdrop-blur escalation disabled under the V1.6 consumer mapping. */
 .glaze .glaze,
 .glaze .glaze--soft,
 .glaze .glaze--deep,
