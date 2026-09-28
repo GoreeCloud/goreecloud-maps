@@ -1,0 +1,13 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "goreecloud-maps-data",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-08-29",
+  "r2_buckets": [
+    {
+      "binding": "MAPS_DATA",
+      "bucket_name": "goreecloud-maps-data",
+      "preview_bucket_name": "goreecloud-maps-data-preview"
+    }
+  ]
+}
