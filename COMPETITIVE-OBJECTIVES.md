@@ -47,7 +47,9 @@ Shared collections and maps should use explicit roles, durable ownership, revoca
 - use GoreeCloud Location for sensitive current-position/tracking capabilities;
 - interoperate with GoreeCloud Search for wider geographic discovery where contracts require it;
 - use GoreeCloud Mesh for governed cross-application coordination where appropriate;
-- consume Privacy Shield and Wardveil Security state substantively rather than as decorative branding.
+- consume Privacy Shield and Wardveil Security state substantively rather than as decorative branding;
+- consume GoreeCloud Policy decisions without transferring rule ownership; and
+- publish and consume GoreeCloud Observability evidence without treating missing telemetry as health.
 
 ### Original Glaze UI map experience
 
@@ -72,4 +74,4 @@ Each capability must pass applicable licensing, data-quality, privacy, security,
 
 ## Current evidence boundary
 
-The executable foundation remains draft PR #1 at validated head `a8aafba65b89dbcd76661368a605762871abbb35`. Its successful CI is valuable candidate evidence but does not satisfy its outstanding independent-review gate, merge governance, production provider/database/Identity acceptance, deployment, release, or Stable qualification.
+The current clean stabilization candidate consolidates the executable foundation and later feature work on top of current `main`. Candidate CI and source evidence do not satisfy independent review, protected promotion, production provider/database/Identity acceptance, Platform Contract 2.0 system acceptance, deployment, release, or Anchor qualification.

@@ -1,0 +1,18 @@
+{
+  "version": 8,
+  "name": "GoreeCloud Maps Local Empty Style",
+  "metadata": {
+    "goreecloud:purpose": "privacy-safe development fallback",
+    "goreecloud:provider": "none"
+  },
+  "sources": {},
+  "layers": [
+    {
+      "id": "canvas-background",
+      "type": "background",
+      "paint": {
+        "background-color": "#dfe7ee"
+      }
+    }
+  ]
+}

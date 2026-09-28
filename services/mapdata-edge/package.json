@@ -1,0 +1,15 @@
+{
+  "name": "@goreecloud/maps-mapdata-edge",
+  "version": "0.1.0-dev.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "check": "tsc --noEmit && wrangler deploy --dry-run --outdir dist",
+    "types": "wrangler types"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "5.20260827.1",
+    "typescript": "7.0.2",
+    "wrangler": "4.127.0"
+  }
+}

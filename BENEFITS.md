@@ -26,7 +26,7 @@ A Glaze UI map-native composition can preserve the map as the primary spatial Ca
 
 ## Platform interoperability
 
-Maps can centralize reusable mapping capabilities while maintaining clear boundaries with GoreeCloud Location, Search, Identity, Mesh, Privacy Shield, Wardveil Security, and Everkeep.
+Maps can centralize reusable mapping capabilities while maintaining clear boundaries with GoreeCloud Location, Search, Identity, Mesh, Privacy Shield, Wardveil Security, Everkeep, Policy, and Observability.
 
 Provider adapters allow routing, geocoding, tiles, traffic, transit, imagery, and other geographic capabilities to improve independently without forcing user-owned data into a provider-specific format.
 
@@ -38,4 +38,4 @@ Everkeep-aligned export, backup, restore, preservation, and portability requirem
 
 ## Current evidence boundary
 
-These are product benefits and design objectives, not a claim that the accepted `main` branch currently delivers the executable Maps experience. The executable foundation remains draft PR #1 pending independent review and merge. Maps remains Development until its production and Stable gates are satisfied.
+These are product benefits and design objectives, not a claim that authoritative `main` already delivers the executable Maps experience. The current stabilization candidate remains review-only until protected promotion completes. Maps remains Forge/Development until its production and Anchor gates are satisfied.

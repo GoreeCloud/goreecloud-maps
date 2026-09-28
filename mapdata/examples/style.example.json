@@ -1,0 +1,53 @@
+{
+  "version": 8,
+  "name": "GoreeCloud Maps synthetic map-data fixture",
+  "metadata": {
+    "goreecloud:fixture": true,
+    "goreecloud:productionData": false
+  },
+  "sources": {
+    "basemap": {
+      "type": "vector",
+      "tiles": ["tiles/{z}/{x}/{y}.pbf"],
+      "minzoom": 0,
+      "maxzoom": 14
+    }
+  },
+  "layers": [
+    {
+      "id": "background",
+      "type": "background",
+      "paint": {
+        "background-color": "#eef2f6"
+      }
+    },
+    {
+      "id": "land",
+      "type": "fill",
+      "source": "basemap",
+      "source-layer": "land",
+      "paint": {
+        "fill-color": "#dfe7dd"
+      }
+    },
+    {
+      "id": "water",
+      "type": "fill",
+      "source": "basemap",
+      "source-layer": "water",
+      "paint": {
+        "fill-color": "#b7d8ed"
+      }
+    },
+    {
+      "id": "roads",
+      "type": "line",
+      "source": "basemap",
+      "source-layer": "transportation",
+      "paint": {
+        "line-color": "#ffffff",
+        "line-width": 1.2
+      }
+    }
+  ]
+}

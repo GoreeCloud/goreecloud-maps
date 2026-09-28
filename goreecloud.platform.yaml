@@ -1,20 +1,37 @@
-schema_version: '0.2'
+schema_version: "2.0"
 
 component:
   type: application
-  id: goreecloud-maps
+  id: maps
   product_name: GoreeCloud Maps
-  repository: GoreeCloud/goreecloud-maps
+  repository: GoreeCloud/maps
 
-lifecycle: development
-version: unreleased-development
+lifecycle: forge
+lifecycle_metadata:
+  flags:
+    - blocked
+    - migration-required
+  deployment_state: development
+  qualification_state: not-started
+  next_gate: weave
+  candidate_identity: null
+  last_transition: null
+  evidence:
+    - README.md
+    - SPECIFICATIONS.md
+    - docs/ARCHITECTURE.md
+version: 0.1.0-forge.1
 
 supported_platforms:
   - web
 
 api:
-  versions: []
-  endpoints: []
+  versions:
+    - v1
+  endpoints:
+    - name: maps-api
+      url: /api/v1
+      purpose: Authenticated Maps API for provider-backed geographic search, routing, saved places, collections, and collaboration foundations.
 
 platform_systems:
   manager:
@@ -23,88 +40,130 @@ platform_systems:
     evidence:
       - README.md
       - SPECIFICATIONS.md
-    notes: GoreeCloud Manager operational visibility is applicable to Maps, but authoritative main has no accepted executable service/runtime, health/readiness interface, Manager registration, or production operational-state publication.
+    notes: Development health and readiness surfaces exist in the executable candidate, but accepted Manager registration, lifecycle control, remediation, and operational-state publication remain incomplete.
   privacy_shield:
     result: applicable-blocked
     version: null
     evidence:
       - README.md
       - SPECIFICATIONS.md
-    notes: Maps privacy requirements are documented, including minimization, separation from Location history, user-controlled sharing/history, and no hidden analytics, but no accepted executable Privacy Shield runtime integration or production privacy evidence exists on main.
+    notes: Maps minimizes sensitive data and preserves the Location authority boundary, but producer-authoritative Privacy Shield runtime decisions, purpose and retention controls, and production privacy acceptance remain incomplete.
   wardveil_security:
     result: applicable-blocked
     version: null
     evidence:
       - README.md
       - SPECIFICATIONS.md
-    notes: Security/provider/authorization requirements are documented, but authoritative main contains no accepted executable Wardveil runtime integration, provider security evidence, abuse controls, or production security acceptance.
+      - docs/IDENTITY.md
+      - docs/PROVIDERS.md
+    notes: OIDC, application authorization, PostGIS RLS, provider validation, and fail-closed source controls exist, but accepted Wardveil runtime security evidence, abuse controls, provider egress controls, and production acceptance remain incomplete.
   everkeep:
     result: applicable-blocked
     version: null
     evidence:
-      - README.md
       - SPECIFICATIONS.md
-    notes: Everkeep continuity is required for eligible future user-owned Maps data such as saved places and collections, but authoritative main has no accepted executable data store, backup, restore, export, portability, or recovery evidence.
+    notes: Saved places and collections require continuity, but accepted Everkeep backup, clean-environment restore, export, portability, rollback, and recovery evidence remain incomplete.
   glaze_ui:
-    result: applicable-migration-required
-    version: '2.0.0'
+    result: applicable-blocked
+    version: "1.6.0"
     evidence:
-      - SPECIFICATIONS.md
-    notes: Current authoritative Maps documentation records Glaze UI 2.0.0 as the executable-foundation target. Current published Stable consumer authority is V1.1 / 1.1.0, so migration is required before current conformance can be claimed. Stacked Draft PR #7 contains a Development V1.1 web reconciliation on top of unmerged feature work; it is not authoritative main acceptance, and the published 1.1.0 source also has the known immutable import-closure defect pending a corrected consumer-eligible Stable release and explicit Maps revalidation.
+      - apps/web/src/main.ts
+      - apps/web/src/glaze-v1-6.css
+      - apps/web/src/glaze-v1-6.ts
+      - docs/GLAZE_UI_ADOPTION.md
+    notes: The Maps candidate now activates a repository-local GLAZE UI V1.6 / 1.6.0 presentation adapter pinned to the current shared V1.6 qualification and accepted-release anchors. Source migration is implemented, but Maps-specific rendered, accessibility, adaptive, performance, representative-browser/device/GPU, rollback, Human Visual Excellence, release, and production acceptance remain incomplete.
   mesh:
     result: applicable-blocked
     version: null
     evidence:
       - README.md
       - SPECIFICATIONS.md
-    notes: GoreeCloud Mesh interoperability is required where appropriate, but authoritative main has no accepted executable Mesh registration, dependencies, events, discovery, transport, or runtime evidence.
+    notes: Maps has explicit first-party integration boundaries, but accepted Mesh capability publication, dependency discovery, event exchange, coordination, and evidence routing remain incomplete.
     capabilities: []
-    dependencies: []
+    dependencies:
+      - goreecloud-location
+      - goreecloud-identity
+      - goreecloud-policy
+      - goreecloud-observability
     published_events: []
     consumed_events: []
   identity:
     result: applicable-blocked
     version: null
     evidence:
+      - docs/IDENTITY.md
+      - apps/web/src/auth.ts
+      - services/api/internal/auth/oidc.go
+    notes: Authorization Code with PKCE and token validation are implemented in source while Maps keeps resource authorization, but production GoreeCloud Identity registration, session acceptance, credential lifecycle, and runtime acceptance remain incomplete.
+  policy:
+    result: applicable-blocked
+    version: null
+    evidence:
+      - SPECIFICATIONS.md
+      - docs/PROVIDERS.md
+    notes: Provider use, sharing, authorization, privacy, and exposure require governed decisions, but approved GoreeCloud Policy representation, evaluation, enforcement coordination, explanation, freshness, and policy evidence are not yet integrated.
+  observability:
+    result: applicable-blocked
+    version: null
+    evidence:
       - README.md
       - SPECIFICATIONS.md
-    notes: GoreeCloud Identity is required for principal authentication while Maps retains resource authorization, but authoritative main has no accepted executable Identity client/session integration or production authorization evidence.
+    notes: Health and readiness endpoints provide bounded Development signals, but accepted GoreeCloud Observability metrics, structured diagnostics, dependency health, correlation, freshness, collection-gap semantics, and operational evidence remain incomplete.
 
 health:
-  health_endpoint: null
-  readiness_endpoint: null
+  health_endpoint: /healthz
+  readiness_endpoint: /readyz
 
 continuity:
   backup:
     required: true
     requirements:
-      - Protect eligible user-owned Maps data, including saved places, collections, offline metadata, and Maps-specific preferences/history when implemented, through an accepted Everkeep backup scope.
-      - Exclude GoreeCloud Location-owned personal location history and unrelated platform-system secrets from ordinary Maps backup payloads.
+      - Protect user-owned saved places, collections, collaboration state, preferences, and other eligible Maps-owned durable state through an accepted Everkeep scope.
+      - Exclude GoreeCloud Location-owned personal location history and reusable secrets from ordinary Maps backup payloads.
   restore:
     required: true
     requirements:
-      - Validate clean-environment restoration of eligible Maps-owned durable state and resource authorization relations before Stable qualification.
-      - Preserve deletion, sharing/revocation, privacy, and collaboration semantics during restore and rollback.
+      - Validate clean-environment restoration of Maps-owned durable state, authorization relations, and PostGIS data before Anchor qualification.
+      - Preserve deletion, membership, sharing, revocation, and privacy semantics across restore and rollback.
   export:
     required: true
     requirements:
-      - Provide documented user-controlled export for eligible Maps-owned state in open or durable formats when that state is implemented.
-      - Keep private searches, routes, saved resources, collaboration state, and precise personal location out of public geographic-data release planes.
+      - Provide documented user-controlled export for eligible Maps-owned state in open or durable formats.
   portability:
     required: true
     requirements:
-      - Preserve migration paths for eligible Maps-owned saved places, collections, preferences, and offline metadata without making any single provider or third-party data model the permanent source of truth.
-      - Maintain provider replacement, attribution, provenance, and user-resource authorization semantics through migrations.
+      - Preserve provider-replaceable saved-place, collection, preference, and offline-data semantics without making one third-party provider the permanent source of truth.
 
-external_dependencies: []
+external_dependencies:
+  - name: PostgreSQL with PostGIS
+    purpose: Durable multi-user spatial storage and row-level authorization enforcement for private Maps state.
+    required: true
+    version_constraint: ">=16"
+  - name: MapLibre GL JS
+    purpose: Replaceable web map rendering engine behind the GoreeCloud Maps presentation boundary.
+    required: true
+    version_constraint: "6.6.0"
+  - name: Approved geographic data release service
+    purpose: Versioned basemap style, tile, glyph, and sprite delivery when live map data is configured.
+    required: false
+    version_constraint: null
+  - name: Approved geocoding provider
+    purpose: Forward and reverse geocoding through the GoreeCloud provider adapter when configured.
+    required: false
+    version_constraint: null
+  - name: Approved routing provider
+    purpose: Route calculation through the GoreeCloud provider adapter when configured.
+    required: false
+    version_constraint: null
 
 compatibility:
-  platform_contract: '0.2'
-  glaze_ui_required: '1.1.0'
+  platform_contract: "2.0"
+  glaze_ui_required: "1.6.0"
   requires:
-    - goreecloud-platform-contract==0.2
-    - glaze-ui==1.1.0
-  provides: []
+    - goreecloud-platform-contract==2.0
+    - glaze-ui==1.6.0
+  provides:
+    - maps-api-v1
 
 evidence:
   acceptance_tests: []
@@ -116,18 +175,22 @@ conformance:
   evidence:
     - README.md
     - SPECIFICATIONS.md
-    - FEATURES.md
-    - BRANDING.md
+    - docs/ARCHITECTURE.md
+    - docs/GLAZE_UI_ADOPTION.md
   blockers:
-    - Authoritative main does not yet contain the executable Maps application/API/PostGIS foundation; Draft PR #1 remains unmerged pending its independent-review gate.
-    - GoreeCloud Manager integration, health/readiness interfaces, operational-state publication, and production observability acceptance are unavailable because no executable runtime is accepted on main.
-    - Producer-authoritative Privacy Shield runtime integration and production privacy acceptance are incomplete.
-    - Wardveil Security runtime/provider/abuse-control evidence and production security acceptance are incomplete.
-    - Everkeep backup, restore, export, portability, migration, rollback, and recovery acceptance for eligible Maps-owned data are incomplete.
-    - Current authoritative Maps documentation targets superseded Glaze UI 2.0.0; current published Stable V1.1 / 1.1.0 migration and downstream acceptance remain incomplete, and the known immutable 1.1.0 import-closure defect still requires a corrected consumer-eligible Stable release before current conformance can be claimed.
-    - GoreeCloud Mesh registration, dependency/event contracts, transport, and runtime acceptance are incomplete.
-    - GoreeCloud Identity authentication/session integration and Maps resource-authorization production acceptance are incomplete.
-    - Approved live map/geocoding/place/routing/geographic-data providers, licensing/provenance/attribution, and production provider acceptance are incomplete.
-    - GoreeCloud Location integration for sensitive current-device/location capabilities is not accepted and Maps must not create a competing tracking/history authority.
-    - Accessibility, representative form-factor/device/browser/GPU acceptance, production database/RLS acceptance, deployment, backup/recovery, rollback, signing, release provenance, and Stable qualification are incomplete.
-    - No Stable or production-approved GoreeCloud Maps release evidence is declared.
+    - The executable Maps foundation and stacked Saved Places/search-save work remain a review candidate and are not authoritative main behavior until protected promotion completes.
+    - GLAZE UI V1.6 / 1.6.0 source migration is implemented, but fresh Maps-specific rendered, accessibility, adaptive, performance, representative-browser/device/GPU, rollback, Human Visual Excellence, release, and production acceptance remain incomplete.
+    - GoreeCloud Manager integration and acceptance remain incomplete.
+    - Privacy Shield runtime decisions, minimization/retention/sharing evidence, and production privacy acceptance remain incomplete.
+    - Wardveil Security runtime evidence, abuse controls, provider egress controls, and production security acceptance remain incomplete.
+    - Everkeep backup, restore, export, portability, rollback, and recovery acceptance remain incomplete.
+    - GoreeCloud Mesh capability/dependency/event contracts and runtime acceptance remain incomplete.
+    - GoreeCloud Identity production registration, session/runtime integration, and acceptance remain incomplete.
+    - GoreeCloud Policy policy-decision and enforcement-evidence integration remain incomplete.
+    - GoreeCloud Observability metrics, dependency health, correlation, diagnostics, freshness, and production operational evidence remain incomplete.
+    - Approved live map data, geocoding, routing, licensing/provenance/attribution, and geographic-quality acceptance remain incomplete.
+    - GoreeCloud Location integration for current-device position remains unaccepted and Maps must not become a competing tracking/history authority.
+    - Required representative browser/device/GPU, database/RLS production, deployment, recovery, rollback, release, and Anchor qualification evidence has not been produced.
+
+# GoreeCloud Sync remains separately governed and is intentionally not represented
+# as a tenth Integral Platform System.

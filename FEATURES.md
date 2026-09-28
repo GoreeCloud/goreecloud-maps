@@ -1,65 +1,58 @@
 # GoreeCloud Maps Features
 
-Status vocabulary: **Accepted main**, **Validated candidate**, **Planned**, or **Blocked by prerequisite**. Candidate status is not a production, release, or Stable claim.
+Status vocabulary: **Accepted main**, **Stabilization candidate**, **Planned**, or **Blocked by prerequisite**. Candidate status is not a release, production, or Anchor claim.
 
 ## Accepted main
 
-| Feature / record | Status | Evidence boundary |
-|---|---|---|
-| Original GoreeCloud Maps project identity | Accepted main | Canonical branding consumer contract is merged. |
-| GNU AGPL v3 repository license material | Accepted main | Root `LICENSE` exists; third-party data/dependencies retain separate terms. |
-| Product boundary vs GoreeCloud Location | Accepted main | Repository/canonical documentation separates Maps from sensitive Location authority. |
-| Mandatory repository governance records | Accepted main after this governance change | README, specifications, features, benefits, competitive objectives, and branding are repository records; they do not imply executable acceptance. |
+| Feature / record | Status |
+|---|---|
+| GoreeCloud Maps product identity and branding contract | Accepted main |
+| GNU AGPL v3 repository license material | Accepted main |
+| Maps vs GoreeCloud Location authority boundary | Accepted main |
+| Repository governance records and Platform Contract history | Accepted main |
 
-## Executable foundation candidate — PR #1
-
-The following capabilities exist in draft PR #1 at validated head `a8aafba65b89dbcd76661368a605762871abbb35`. CI run `33251905892` passed, but the candidate remains unmerged pending its independent-review gate.
+## Current stabilization candidate
 
 | Capability | Status |
 |---|---|
-| TypeScript/Vite/MapLibre web shell | Validated candidate |
-| Map-as-Canvas responsive web composition | Validated candidate |
-| Go Maps API | Validated candidate |
-| PostgreSQL/PostGIS data foundation | Validated candidate |
-| Owner/editor/viewer authorization model | Validated candidate |
-| PostgreSQL row-level-security tests | Validated candidate |
-| GoreeCloud Identity-compatible Authorization Code + PKCE browser boundary | Validated candidate |
-| Access-token plus UserInfo subject verification | Validated candidate |
-| Same-origin Maps API client | Validated candidate |
-| Nominatim-compatible forward/reverse geocoding adapter | Validated candidate |
-| Valhalla-compatible route adapter | Validated candidate |
-| Provider capability status with explicit unconfigured state | Validated candidate |
-| Shared collection/member/item API primitives | Validated candidate |
-| Owner-scoped Saved Places API/client contract | Validated candidate |
-| Versioned public geographic-data release contract | Validated candidate |
-| Read-only Cloudflare Worker/R2-oriented edge source contract | Validated candidate |
-| Privacy-safe local empty map style/no-provider fallback | Validated candidate |
+| TypeScript/Vite/MapLibre web shell | Stabilization candidate |
+| Map-as-canvas responsive composition | Stabilization candidate |
+| Go Maps API | Stabilization candidate |
+| PostgreSQL/PostGIS data foundation | Stabilization candidate |
+| Owner/editor/viewer authorization + RLS tests | Stabilization candidate |
+| Identity-compatible Authorization Code + PKCE browser boundary | Stabilization candidate |
+| Access-token/UserInfo subject verification | Stabilization candidate |
+| Same-origin Maps API client | Stabilization candidate |
+| Nominatim-compatible forward/reverse geocoding adapter | Stabilization candidate |
+| Valhalla-compatible routing adapter | Stabilization candidate |
+| Explicit provider-unconfigured/degraded state | Stabilization candidate |
+| Owner-scoped Saved Places API/client workflow | Stabilization candidate |
+| Search-result Save action | Stabilization candidate |
+| Shared collection/member/item primitives | Stabilization candidate |
+| Versioned public geographic-data release contract | Stabilization candidate |
+| Read-only map-data edge source contract | Stabilization candidate |
+| Privacy-safe local empty map style/no-provider fallback | Stabilization candidate |
+| Exact-head CI and Platform Contract 2.0 validation | Stabilization candidate |
+| Repository-local GLAZE UI V1.6 / 1.6.0 source mapping | Stabilization candidate / source implemented; downstream acceptance blocked |
 
-These items are not accepted `main` capabilities until the candidate passes the remaining review/merge gates.
+## Planned / incomplete product capabilities
 
-## Planned product capabilities
-
+- Maps-specific GLAZE UI V1.6 rendered/accessibility/adaptive/performance/browser-device acceptance;
 - approved live vector-tile/map-style infrastructure;
-- rich place/POI data and dedicated nearby discovery;
-- approved live geocoder and geographic-quality acceptance;
-- approved live routing engine and route-quality acceptance;
-- route alternatives, advanced constraints, and traffic-aware estimates;
-- turn-by-turn navigation and rerouting;
-- GoreeCloud Location current-position integration;
-- traffic, closures, incidents, transit, terrain, 3D/globe, imagery, indoor mapping, and EV routing where licensed/approved data exists;
-- offline regions, offline search/routing data, package freshness/integrity, quota management, and updates;
-- complete Saved Places visual experience and cross-device synchronization;
-- full collaborative membership/invitation UI, share links, ownership transfer, annotations, and shared route plans;
+- rich POI/place data and nearby discovery;
+- approved geocoder and routing quality acceptance;
+- route alternatives, advanced constraints, traffic-aware estimates, turn-by-turn navigation, and rerouting;
+- current-position integration through GoreeCloud Location;
+- traffic, closures, incidents, transit, terrain, 3D/globe, imagery, indoor mapping, and EV routing where approved data exists;
+- offline regions, offline search/routing data, freshness/integrity, storage quota, and update controls;
+- complete Saved Places and collections UX, synchronization, invitations, ownership transfer, annotations, and shared route plans;
 - GoreeCloud Search geographic-discovery interoperability;
-- representative native/mobile/tablet/desktop/other form-factor clients where justified.
+- approved native/form-factor clients where justified.
 
-## Blocked by prerequisite
+## Blocked prerequisites
 
-- production GoreeCloud Identity client/session acceptance;
-- human-friendly invitation lookup until an approved Identity consumer-directory integration is accepted;
-- production geographic providers until licensing, attribution, data quality, privacy, security, network, monitoring, and operational gates pass;
-- Stable qualification until current Glaze UI, Privacy Shield, Wardveil Security, Everkeep, Mesh, Identity, Location, accessibility, recovery, deployment, and release gates are satisfied as applicable.
+Anchor qualification remains blocked by incomplete Manager, Privacy Shield, Wardveil Security, Everkeep, Glaze UI, Mesh, Identity, Policy, and Observability acceptance; live geographic-provider approval; production database/RLS and Identity validation; Location integration where used; accessibility/form-factor/device/GPU evidence; continuity and restore evidence; deployment; rollback; release provenance; and production acceptance.
 
 ## Evidence rule
 
-A feature listed here may be described as implemented only at the evidence level shown. Repository documentation must never turn an unmerged candidate, provider interface, branding asset, or planned platform integration into an accepted runtime claim.
+A feature may be described only at its verified evidence level. Repository documentation must never convert a candidate branch, provider seam, branding asset, or planned integration into accepted runtime behavior.
