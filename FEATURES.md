@@ -34,6 +34,7 @@ Status vocabulary: **Accepted main**, **Stabilization candidate**, **Planned**, 
 | Privacy-safe local empty map style/no-provider fallback | Stabilization candidate |
 | Exact-head CI and Platform Contract 2.0 validation | Stabilization candidate |
 | Repository-local GLAZE UI V1.6 / 1.6.0 source mapping | Stabilization candidate / source implemented; downstream acceptance blocked |
+| Dynamic search/route/Saved/collection region semantics and keyboard focus handoff | Stabilization candidate follow-up; source implemented, rendered/AT acceptance blocked |
 
 ## Planned / incomplete product capabilities
 
