@@ -10,7 +10,7 @@ const app = document.querySelector<HTMLDivElement>('#app');
 if (!app) throw new Error('Maps application root was not found.');
 
 app.innerHTML = `
-  <main class="maps-shell" data-panel="explore">
+  <main class="maps-shell" data-panel="explore" data-glaze-ui="maps" data-glaze-version="1.6.0">
     <div id="map" class="map-canvas" aria-label="Interactive map"></div>
 
     <header class="top-island glaze glaze--soft" aria-label="Map search and account controls">
@@ -45,7 +45,7 @@ app.innerHTML = `
         <button type="button" class="chip" data-category="Outdoors">Outdoors</button>
       </div>
 
-      <section class="status-card surface-raised" aria-labelledby="provider-title">
+      <section class="status-card surface-raised" data-glaze-semantic-surface="protected" aria-labelledby="provider-title">
         <div class="status-dot" aria-hidden="true"></div>
         <div>
           <h2 id="provider-title" data-provider-title>Checking Maps capabilities…</h2>
@@ -108,7 +108,7 @@ app.innerHTML = `
       </button>
     </nav>
 
-    <div class="toast glaze glaze--deep" role="status" aria-live="polite" hidden></div>
+    <div class="toast glaze glaze--deep" data-glaze-semantic-surface="protected" role="status" aria-live="polite" hidden></div>
   </main>
 `;
 
@@ -166,7 +166,7 @@ const showToast = (message: string): void => {
 
 const setIntegrationContent = (content: string): void => {
   document.querySelectorAll<HTMLElement>('[data-integration-host]').forEach((host) => {
-    host.innerHTML = `<section class="integration-panel surface-raised">${content}</section>`;
+    host.innerHTML = `<section class="integration-panel surface-raised" data-glaze-semantic-surface="protected">${content}</section>`;
   });
 };
 
