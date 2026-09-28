@@ -18,7 +18,7 @@ This file is the repository-side feature roadmap control for GoreeCloud Maps. It
 | FR-002 | Move unfinished actionable obligations into GoreeCloud Tasks Management with priority, dependency, and lifecycle disposition. | High | Ongoing control |
 | FR-003 | Do not mark features implemented, complete, cancelled, superseded, Anchor, or production-ready without authoritative evidence. | High | Ongoing control |
 | FR-004 | Consolidate the executable MapLibre/PostGIS/API foundation, Saved Places UI, provider-backed search/save, routing, and collaboration work into one current reviewable candidate rather than maintaining a stale stacked-PR chain. | Critical | In progress — stabilization candidate |
-| FR-005 | Migrate the implemented Maps V1.1 presentation layer substantively to current GLAZE UI V1.6 / 1.6.0 and produce fresh Maps-specific rendered/accessibility/performance/form-factor evidence. | High | Migration required |
+| FR-005 | Complete fresh Maps-specific rendered/accessibility/performance/form-factor acceptance for the implemented GLAZE UI V1.6 / 1.6.0 source mapping. | High | Source implemented; acceptance blocked |
 | FR-006 | Complete Platform Contract 2.0 nine-system integration work for Manager, Privacy Shield, Wardveil, Everkeep, Glaze UI, Mesh, Identity, Policy, and Observability. | Critical | Blocked / in progress |
 | FR-007 | Approve and validate live geographic data, geocoding, and routing providers with licensing, provenance, attribution, quality, egress, privacy, security, and degradation controls. | Critical | Planned / blocked |
 | FR-008 | Integrate approved current-position behavior through GoreeCloud Location without creating a second tracking/history authority. | High | Planned / blocked |
