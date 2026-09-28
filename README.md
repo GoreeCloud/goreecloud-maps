@@ -70,13 +70,17 @@ The folded-map/route identity is intentionally distinct from GoreeCloud Location
 
 - [SPECIFICATIONS.md](SPECIFICATIONS.md) — durable product, architecture, privacy/security, integration, and acceptance contract.
 - [FEATURES.md](FEATURES.md) — evidence-scoped feature inventory.
-- [FEATURE-ROADMAP.md](FEATURE-ROADMAP.md) — active feature roadmap control.
+- [PROJECT-SPECIFICATIONS.md](PROJECT-SPECIFICATIONS.md) — canonical project requirements, architecture, boundaries, and acceptance gates.
+- [PROJECT-RECORD.md](PROJECT-RECORD.md) — significant project history, governance transitions, and evidence.
+- [IMPLEMENTED-FEATURES.md](IMPLEMENTED-FEATURES.md) — evidence-scoped implemented capability inventory.
+- [PLANNED-FEATURES.md](PLANNED-FEATURES.md) — open, partial, blocked, and planned capability obligations.
+- [CHANGELOGS.md](CHANGELOGS.md) — repository-oriented change history.
 - [BENEFITS.md](BENEFITS.md) — intended user, privacy, operational, accessibility, and resilience benefits.
 - [COMPETITIVE-OBJECTIVES.md](COMPETITIVE-OBJECTIVES.md) — capability and differentiation objectives.
 - [BRANDING.md](BRANDING.md) — canonical visual-identity consumer contract.
 - [docs/GLAZE_UI_ADOPTION.md](docs/GLAZE_UI_ADOPTION.md) — current implemented/required Glaze boundary.
 
-The authoritative project record remains `GoreeCloud/Projects/Project Specification — Maps`; chronological implementation evidence belongs in `GoreeCloud/Changelogs/Change Log — Maps`.
+`PROJECT-SPECIFICATIONS.md` and `PROJECT-RECORD.md` are the repository-local project authority once this migration is accepted on `main`. The former Drive project specification is frozen migration input only until default-branch readback permits its permanent removal. Feature state and changelogs are repository-native; Google Drive must not be maintained as a parallel roadmap or changelog authority.
 
 ## Qualification boundary
 
