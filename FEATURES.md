@@ -33,11 +33,11 @@ Status vocabulary: **Accepted main**, **Stabilization candidate**, **Planned**, 
 | Read-only map-data edge source contract | Stabilization candidate |
 | Privacy-safe local empty map style/no-provider fallback | Stabilization candidate |
 | Exact-head CI and Platform Contract 2.0 validation | Stabilization candidate |
-| Implemented GLAZE UI V1.1 mapping with current V1.6 migration target | Stabilization candidate / migration required |
+| Repository-local GLAZE UI V1.6 / 1.6.0 source mapping | Stabilization candidate / source implemented; acceptance blocked |
 
 ## Planned / incomplete product capabilities
 
-- substantive GLAZE UI V1.6 migration and Maps-specific rendered/accessibility/performance acceptance;
+- Maps-specific GLAZE UI V1.6 rendered/accessibility/adaptive/performance/browser-device acceptance;
 - approved live vector-tile/map-style infrastructure;
 - rich POI/place data and nearby discovery;
 - approved geocoder and routing quality acceptance;
