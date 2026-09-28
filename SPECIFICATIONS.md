@@ -116,7 +116,7 @@ Decorative names, badges, metadata, or artwork do not satisfy integration requir
 
 ## 9. Glaze UI and form-factor requirements
 
-The implemented stabilization source retains its repository-local GLAZE UI V1.1 / 1.1.0 presentation mapping. The current approved shared consumer target is GLAZE UI V1.6 / 1.6.0. Maps therefore remains migration-required; the V1.1 bytes must not be relabeled as V1.6 without a substantive reviewed migration and fresh application-specific evidence.
+The stabilization source now implements a repository-local GLAZE UI V1.6 / 1.6.0 presentation adapter. It uses current shared source/release authority as a reference while keeping runtime behavior local, presentation-only, and caller-truth-owned. This closes the source-version migration gap but does not establish rendered, accessibility, adaptive, browser/device/GPU, performance, rollback, or production acceptance.
 
 The map is the primary Canvas. Search, inspectors, place cards, navigation controls, sheets, toolbars, and account controls must use appropriate semantic surfaces/material roles rather than indiscriminate transparency.
 
@@ -144,7 +144,7 @@ Maps remains Forge/Development until all applicable gates are satisfied together
 
 - executable candidate accepted through required review/protected promotion;
 - exact-head CI and current Platform Contract 2.0 validation;
-- substantive GLAZE UI V1.6 migration plus rendered/accessibility/adaptive/performance acceptance;
+- GLAZE UI V1.6 rendered/accessibility/adaptive/performance/browser-device acceptance for the implemented source mapping;
 - approved live geographic data and provider contracts;
 - licensing/provenance/attribution verification;
 - production database and authorization/RLS acceptance;
